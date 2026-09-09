@@ -1,7 +1,11 @@
+import logging
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from app.config import settings
+from app.config import DEFAULT_DB_PATH, settings
+
+logger = logging.getLogger("revive.database")
 
 
 class Base(DeclarativeBase):
@@ -16,15 +20,31 @@ def get_normalized_database_url(url: str) -> str:
     return url
 
 
-normalized_db_url = get_normalized_database_url(settings.database_url)
-connect_args = {"check_same_thread": False} if normalized_db_url.startswith("sqlite") else {}
-engine = create_engine(normalized_db_url, pool_pre_ping=True, connect_args=connect_args)
+def create_resilient_engine():
+    normalized_db_url = get_normalized_database_url(settings.database_url)
+    connect_args = {"check_same_thread": False} if normalized_db_url.startswith("sqlite") else {}
+    eng = create_engine(normalized_db_url, pool_pre_ping=True, connect_args=connect_args)
+    if not normalized_db_url.startswith("sqlite"):
+        try:
+            with eng.connect():
+                pass
+        except OperationalError as exc:
+            logger.warning(
+                "Primary database connection failed. Falling back gracefully to SQLite: %s",
+                exc,
+            )
+            sqlite_url = f"sqlite:///{DEFAULT_DB_PATH.as_posix()}"
+            eng = create_engine(sqlite_url, pool_pre_ping=True, connect_args={"check_same_thread": False})
+    return eng
+
+
+engine = create_resilient_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def ensure_db_initialized() -> None:
     Base.metadata.create_all(bind=engine)
-    if settings.database_url.startswith("sqlite"):
+    if "sqlite" in str(engine.url):
         with engine.connect() as conn:
             try:
                 res = conn.exec_driver_sql("PRAGMA table_info(users)").fetchall()

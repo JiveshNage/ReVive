@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class MaterialOut(BaseModel):
@@ -225,19 +225,27 @@ class DemoWorkflowResult(BaseModel):
 
 
 class OtpSendRequest(BaseModel):
-    phone: str = Field(..., min_length=10, max_length=15)
+    phone: str | None = None
     email: str | None = None
+
+    @model_validator(mode="after")
+    def validate_identifier(self):
+        if not (self.phone and self.phone.strip()) and not (self.email and self.email.strip()):
+            raise ValueError("Either phone or email must be provided.")
+        return self
 
 
 class OtpSendResponse(BaseModel):
     success: bool
     message: str
-    demo_otp: str
+    demo_otp: str | None = None
 
 
 class OtpVerifyRequest(BaseModel):
-    phone: str = Field(..., min_length=10, max_length=15)
+    phone: str | None = None
+    email: str | None = None
     otp: str = Field(..., min_length=4, max_length=8)
+    role: str | None = "collector"
 
 
 class UserProfileOut(BaseModel):

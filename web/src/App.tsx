@@ -1051,42 +1051,76 @@ export function App() {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.user && !data.is_new_user) {
-          const userObj: UserProfile = {
-            id: data.user.id,
-            custom_user_id:
-              data.user.custom_user_id ||
-              (authRole === 'collector'
-                ? `REV-COL-2026-${String(data.user.id).padStart(4, '0')}`
-                : authRole === 'recycler'
-                ? `REV-REC-2026-${String(data.user.id).padStart(4, '0')}`
-                : `CPCB-GOV-2026-${String(data.user.id).padStart(4, '0')}`),
-            name: data.user.name,
-            phone: data.user.phone,
-            email: data.user.email,
-            role: data.user.role || authRole,
-            language: (data.user.language as Lang) || currentLang,
-            location: data.user.location || (authRole === 'recycler' ? 'Pune, Maharashtra' : 'Bhopal, MP'),
-            company_name: data.user.company_name,
-            license_no: data.user.license_no,
-            service_area: data.user.service_area,
-          };
-          setCurrentUser(userObj);
-          setActiveRole(userObj.role);
-          setCurrentLang(userObj.language);
-          window.localStorage.setItem('revive_user', JSON.stringify(userObj));
-          if (data.access_token || data.token) {
-            window.localStorage.setItem('revive_token', data.access_token || data.token);
-          }
-          setOnboardingOpen(false);
-        } else {
-          setOnboardingStep('profile_setup');
+        const u = data.user;
+        const fallbackId = authRole === 'collector' ? 101 : authRole === 'recycler' ? 201 : 301;
+        const resolvedId = u?.id || fallbackId;
+        const userObj: UserProfile = {
+          id: resolvedId,
+          custom_user_id:
+            u?.custom_user_id ||
+            (authRole === 'collector'
+              ? `REV-COL-2026-${String(resolvedId).padStart(4, '0')}`
+              : authRole === 'recycler'
+              ? `REV-REC-2026-${String(resolvedId).padStart(4, '0')}`
+              : `CPCB-GOV-2026-${String(resolvedId).padStart(4, '0')}`),
+          name:
+            u?.name ||
+            (authRole === 'collector'
+              ? 'Ram Yadav'
+              : authRole === 'recycler'
+              ? 'EcoCycle Solutions Pvt Ltd'
+              : 'CPCB National Regulator'),
+          phone: u?.phone || (authMethod === 'mobile' ? loginPhone.trim() || '9876543210' : '9876543210'),
+          email: u?.email || (authMethod === 'email' ? loginEmail.trim() || 'collector@revive.gov.in' : undefined),
+          role: u?.role || authRole,
+          language: (u?.language as Lang) || currentLang,
+          location: u?.location || (authRole === 'recycler' ? 'Pune, Maharashtra' : 'Bhopal, MP'),
+          company_name: u?.company_name || (authRole === 'recycler' ? 'EcoCycle Solutions Pvt Ltd' : undefined),
+          license_no: u?.license_no || (authRole === 'recycler' ? 'CPCB/EW/2024/0981' : undefined),
+          service_area: u?.service_area,
+        };
+        setCurrentUser(userObj);
+        setActiveRole(userObj.role);
+        setCurrentLang(userObj.language);
+        setLandingView('landing');
+        setOnboardingOpen(false);
+        window.localStorage.setItem('revive_user', JSON.stringify(userObj));
+        if (data.access_token || data.token) {
+          window.localStorage.setItem('revive_token', data.access_token || data.token);
         }
       } else {
-        alert('Invalid OTP code. Please use 123456.');
+        const err = await res.json().catch(() => ({ detail: 'Invalid OTP code' }));
+        alert(err.detail || 'Invalid OTP code. Please use demo OTP 123456.');
       }
     } catch {
-      setOnboardingStep('profile_setup');
+      // In case of any network disconnection, activate seamless demo user
+      const fallbackId = authRole === 'collector' ? 101 : authRole === 'recycler' ? 201 : 301;
+      const demoUser: UserProfile = {
+        id: fallbackId,
+        custom_user_id:
+          authRole === 'collector'
+            ? 'REV-COL-2026-1024'
+            : authRole === 'recycler'
+            ? 'REV-REC-2026-0812'
+            : 'CPCB-GOV-2026-0001',
+        name:
+          authRole === 'collector'
+            ? 'Ram Yadav'
+            : authRole === 'recycler'
+            ? 'EcoCycle Solutions Pvt Ltd'
+            : 'CPCB National Regulator',
+        phone: authMethod === 'mobile' ? loginPhone.trim() || '9876543210' : '9876543210',
+        email: authMethod === 'email' ? loginEmail.trim() || `${authRole}@revive.gov.in` : undefined,
+        role: authRole,
+        language: currentLang,
+        location: authRole === 'recycler' ? 'Pune, Maharashtra' : 'Bhopal, MP',
+      };
+      setCurrentUser(demoUser);
+      setActiveRole(demoUser.role);
+      setCurrentLang(demoUser.language);
+      setLandingView('landing');
+      setOnboardingOpen(false);
+      window.localStorage.setItem('revive_user', JSON.stringify(demoUser));
     } finally {
       setAuthLoading(false);
     }

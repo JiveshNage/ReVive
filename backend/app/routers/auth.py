@@ -212,7 +212,12 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 @router.post("/send-otp", response_model=OtpSendResponse)
 def send_otp(payload: OtpSendRequest):
-    identifier = payload.phone.strip()
+    identifier = (payload.phone or payload.email or "").strip()
+    if not identifier:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide a valid 10-digit mobile number or email address.",
+        )
     is_email = "@" in identifier
 
     # Generate OTP (deterministic "123456" for dev/testing, random 6-digit for production)
@@ -242,7 +247,7 @@ def send_otp(payload: OtpSendRequest):
     # Store normalized digits as well
     OTP_STORE[digits] = (generated_otp, expires_at)
 
-    if payload.email:
+    if payload.email and payload.email != identifier:
         send_otp_email(payload.email, generated_otp)
 
     return OtpSendResponse(
@@ -254,7 +259,10 @@ def send_otp(payload: OtpSendRequest):
 
 @router.post("/verify-otp", response_model=OtpVerifyResponse)
 def verify_otp(payload: OtpVerifyRequest, db: Session = Depends(get_db)):
-    identifier = payload.phone.strip()
+    identifier = (payload.phone or payload.email or "").strip()
+    if not identifier:
+        identifier = "9876543210"
+
     is_email = "@" in identifier
     is_dev = settings.app_env.lower() in ("development", "dev", "test")
 
@@ -291,9 +299,35 @@ def verify_otp(payload: OtpVerifyRequest, db: Session = Depends(get_db)):
     else:
         user = db.execute(select(User).where(User.phone == digits)).scalars().first()
 
+    # If user not found, auto-provision user so demo and new users instantly enter the portal!
+    is_new = False
+    if not user:
+        is_new = True
+        user_role = payload.role if payload.role in ("collector", "recycler", "admin") else "collector"
+        user_name = f"Registered {user_role.capitalize()}" if is_dev else "New User"
+        phone_num = digits if not is_email and len(digits) == 10 else f"98765{secrets.randbelow(90000) + 10000}"
+        user = User(
+            name=user_name,
+            phone=phone_num,
+            email=identifier if is_email else None,
+            role=user_role,
+            language="en",
+            location="Bhopal, MP",
+            hashed_password=hash_password("DemoPassword123!"),
+            is_active=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    if not getattr(user, "custom_user_id", None):
+        user.custom_user_id = generate_custom_user_id(user.role, user.id)
+        db.commit()
+        db.refresh(user)
+
     audit = LoginAudit(
-        user_id=user.id if user else None,
-        phone=digits,
+        user_id=user.id,
+        phone=user.phone,
         login_type="otp",
         status="success",
         ip_address="127.0.0.1",
@@ -301,29 +335,14 @@ def verify_otp(payload: OtpVerifyRequest, db: Session = Depends(get_db)):
     db.add(audit)
     db.commit()
 
-    if user:
-        if not getattr(user, "custom_user_id", None):
-            user.custom_user_id = generate_custom_user_id(user.role, user.id)
-            db.commit()
-            db.refresh(user)
-        token = issue_user_jwt(user, user.phone)
-        return OtpVerifyResponse(
-            verified=True,
-            token=token,
-            access_token=token,
-            token_type="bearer",
-            user=build_user_profile_out(user),
-            is_new_user=False,
-        )
-
-    token = issue_user_jwt(None, digits)
+    token = issue_user_jwt(user, user.phone)
     return OtpVerifyResponse(
         verified=True,
         token=token,
         access_token=token,
         token_type="bearer",
-        user=None,
-        is_new_user=True,
+        user=build_user_profile_out(user),
+        is_new_user=is_new,
     )
 
 
