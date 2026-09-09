@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Lang, Material, RecyclerMatch, I18N, API_BASE_URL } from '../../types';
 
 export interface CreateLotPageProps {
@@ -25,6 +25,18 @@ export interface CreateLotPageProps {
   onNavigateTransactions: () => void;
 }
 
+const getMaterialIcon = (name: string): string => {
+  const n = name.toLowerCase();
+  if (n.includes('pcb') || n.includes('circuit') || n.includes('motherboard')) return '⚡';
+  if (n.includes('battery') || n.includes('cell')) return '🔋';
+  if (n.includes('cable') || n.includes('wire') || n.includes('copper')) return '🔌';
+  if (n.includes('mobile') || n.includes('phone') || n.includes('gadget')) return '📱';
+  if (n.includes('display') || n.includes('crt') || n.includes('lcd') || n.includes('screen')) return '📺';
+  if (n.includes('metal') || n.includes('iron') || n.includes('aluminum')) return '🔩';
+  if (n.includes('plastic') || n.includes('pvc')) return '♻️';
+  return '📦';
+};
+
 export const CreateLotPage: React.FC<CreateLotPageProps> = ({
   currentLang,
   materials,
@@ -46,6 +58,12 @@ export const CreateLotPage: React.FC<CreateLotPageProps> = ({
 }) => {
   const [matchedBuyers, setMatchedBuyers] = useState<RecyclerMatch[]>([]);
   const [selectedBuyerId, setSelectedBuyerId] = useState<number | null>(null);
+
+  // Local object URL for instant image preview
+  const imagePreviewUrl = useMemo(() => {
+    if (!aiImageFile) return null;
+    return URL.createObjectURL(aiImageFile);
+  }, [aiImageFile]);
 
   const mat = materials.find((m) => m.id === newLotMaterialId) || materials[0];
 
@@ -97,6 +115,7 @@ export const CreateLotPage: React.FC<CreateLotPageProps> = ({
       isMounted = false;
     };
   }, [newLotMaterialId, mat]);
+
   const baseRate = mat?.name?.toLowerCase().includes('pcb')
     ? 185
     : mat?.name?.toLowerCase().includes('cable')
@@ -104,6 +123,7 @@ export const CreateLotPage: React.FC<CreateLotPageProps> = ({
     : mat?.name?.toLowerCase().includes('battery')
     ? 65
     : 95;
+
   const multiplier =
     selectedScrapCondition === 'good'
       ? 1.0
@@ -112,59 +132,145 @@ export const CreateLotPage: React.FC<CreateLotPageProps> = ({
       : selectedScrapCondition === 'damaged'
       ? 0.75
       : 0.85;
-  const totalVal = Math.round(Number(newLotQuantity || 5) * baseRate * multiplier);
-  const co2 = (Number(newLotQuantity || 5) * 1.8).toFixed(1);
-  const toxic = (Number(newLotQuantity || 5) * 0.12).toFixed(2);
+
+  const qty = Math.max(0.1, Number(newLotQuantity) || 5);
+  const totalVal = Math.round(qty * baseRate * multiplier);
+  const co2 = (qty * 1.8).toFixed(1);
+  const toxic = (qty * 0.12).toFixed(2);
 
   return (
-    <div className="multipage-view">
-      <div className="page-header-row">
+    <div className="multipage-view" style={{ maxWidth: '1240px', margin: '0 auto', paddingBottom: '60px' }}>
+      {/* Page Header */}
+      <div className="page-header-row" style={{ alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
-          <h1>{I18N[currentLang].studioTitle}</h1>
-          <p>{I18N[currentLang].studioSubtitle}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span style={{ fontSize: '24px' }}>✨</span>
+            <h1 style={{ margin: 0, fontSize: '26px', color: '#064e3b', fontWeight: 800 }}>
+              {I18N[currentLang].studioTitle}
+            </h1>
+            <span
+              style={{
+                fontSize: '11px',
+                background: '#ecfdf5',
+                color: '#047857',
+                padding: '3px 10px',
+                borderRadius: '999px',
+                fontWeight: 700,
+                border: '1px solid #a7f3d0',
+              }}
+            >
+              CPCB Certified Studio
+            </span>
+          </div>
+          <p style={{ margin: 0, color: '#4b5563', fontSize: '14px' }}>
+            {I18N[currentLang].studioSubtitle}
+          </p>
         </div>
-        <button className="secondary-button" onClick={onBack}>
+        <button
+          className="secondary-button"
+          onClick={onBack}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', borderRadius: '10px' }}
+        >
           ← {I18N[currentLang].backBtn}
         </button>
       </div>
 
+      {/* Success Notification */}
       {lotSuccessMsg && (
         <div
           style={{
-            padding: '14px 18px',
-            background: '#eaf8ed',
-            border: '1px solid #b7e8c3',
-            borderRadius: '12px',
-            color: '#0d6537',
-            fontWeight: 600,
-            marginBottom: '20px',
+            padding: '16px 20px',
+            background: '#ecfdf5',
+            border: '1.5px solid #a7f3d0',
+            borderRadius: '14px',
+            color: '#065f46',
+            fontWeight: 700,
+            marginBottom: '24px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)',
           }}
         >
-          <span>{lotSuccessMsg}</span>
-          <button className="mini-action" onClick={onNavigateTransactions}>
-            View Transactions →
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '20px' }}>✅</span>
+            <span>{lotSuccessMsg}</span>
+          </div>
+          <button
+            className="mini-action"
+            style={{ background: '#059669', color: '#fff', padding: '8px 16px', borderRadius: '8px' }}
+            onClick={onNavigateTransactions}
+          >
+            {currentLang === 'hi' ? 'लेनदेन देखें →' : 'View In Ledger →'}
           </button>
         </div>
       )}
 
+      {/* Main Studio Two-Column Grid */}
       <div className="lot-studio-layout">
-        {/* Left Column: Data Entry & AI */}
-        <div className="panel" style={{ padding: '22px' }}>
-          <div className="form-group">
-            <label>{I18N[currentLang].uploadPhotoTitle}</label>
+        {/* Left Column: Scrap Details & AI Inspector */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Card 1: AI Scrap Photo Inspector */}
+          <div
+            className="studio-panel"
+            style={{
+              background: '#ffffff',
+              borderRadius: '18px',
+              border: '1px solid #e2e8f0',
+              padding: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>📸</span>
+                <span>{I18N[currentLang].uploadPhotoTitle}</span>
+              </label>
+              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>MobileNet AI v3</span>
+            </div>
+
             <div
               className="photo-dropzone"
               onClick={() => document.getElementById('studio-file-input')?.click()}
             >
-              <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>📷</span>
-              <strong>{aiImageFile ? aiImageFile.name : 'Click to take picture or upload image'}</strong>
-              <small style={{ display: 'block', color: '#688478', marginTop: '4px' }}>
-                JPEG, PNG supported. Auto-scanned with PyTorch MobileNet model.
-              </small>
+              {imagePreviewUrl ? (
+                <div>
+                  <img src={imagePreviewUrl} alt="Scrap Preview" className="photo-preview-thumb" />
+                  <div style={{ fontWeight: 700, color: '#065f46', fontSize: '13px' }}>
+                    📷 {aiImageFile?.name}
+                  </div>
+                  <small style={{ color: '#059669', display: 'block', marginTop: '2px', fontWeight: 600 }}>
+                    {currentLang === 'hi' ? 'फोटो बदलने के लिए क्लिक करें' : 'Click to change or retake photo'}
+                  </small>
+                </div>
+              ) : (
+                <div>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: '#dcfce7',
+                      color: '#059669',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 10px',
+                      fontSize: '22px',
+                    }}
+                  >
+                    📷
+                  </div>
+                  <strong style={{ display: 'block', fontSize: '14px', color: '#0f172a', marginBottom: '4px' }}>
+                    {currentLang === 'hi' ? 'स्क्रैप की फोटो खींचें या अपलोड करें' : 'Photograph Scrap or Upload Image'}
+                  </strong>
+                  <small style={{ display: 'block', color: '#64748b', fontSize: '12px' }}>
+                    JPEG, PNG supported. Neural vision auto-classifies PCB, batteries, and cables.
+                  </small>
+                </div>
+              )}
             </div>
+
             <input
               id="studio-file-input"
               type="file"
@@ -175,75 +281,177 @@ export const CreateLotPage: React.FC<CreateLotPageProps> = ({
                 setAiImageFile(file);
               }}
             />
-            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+
+            {/* AI Action Strip */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '12px',
+                marginTop: '16px',
+                paddingTop: '16px',
+                borderTop: '1px solid #f1f5f9',
+              }}
+            >
               <button
-                className="mini-action"
-                style={{ padding: '8px 16px', background: '#086c4b' }}
+                type="button"
+                className="ai-scan-pulse-btn"
                 disabled={!aiImageFile || aiLoading}
                 onClick={onPredictMaterialWithAi}
               >
-                {aiLoading ? I18N[currentLang].scanningAi : I18N[currentLang].scanAiBtn}
+                <span>⚡</span>
+                <span>{aiLoading ? I18N[currentLang].scanningAi : currentLang === 'hi' ? 'एआई से पहचानें' : 'Scan with Neural AI'}</span>
               </button>
-              {aiResult && (
-                <span className="verification-badge verified" style={{ alignSelf: 'center' }}>
-                  ✓ {aiResult.category} ({(aiResult.confidence * 100).toFixed(1)}%)
+
+              {aiResult ? (
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: '#ecfdf5',
+                    border: '1px solid #86efac',
+                    padding: '8px 14px',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <span style={{ fontSize: '16px' }}>🎯</span>
+                  <div>
+                    <strong style={{ fontSize: '13px', color: '#065f46', display: 'block' }}>
+                      {aiResult.category}
+                    </strong>
+                    <small style={{ color: '#047857', fontWeight: 600, fontSize: '11px' }}>
+                      {(aiResult.confidence * 100).toFixed(1)}% Confidence
+                    </small>
+                  </div>
+                </div>
+              ) : (
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  {currentLang === 'hi' ? 'फोटो अपलोड करके एआई स्कैन दबाएं' : 'Upload photo to auto-detect category'}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="form-group">
-            <label>
-              1.{' '}
-              {currentLang === 'hi'
-                ? 'सामग्री श्रेणी चुनें'
-                : currentLang === 'mr'
-                ? 'साहित्याचा प्रकार निवडा'
-                : 'Select Material Category'}
-            </label>
+          {/* Card 2: Material Category Selection */}
+          <div
+            className="studio-panel"
+            style={{
+              background: '#ffffff',
+              borderRadius: '18px',
+              border: '1px solid #e2e8f0',
+              padding: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>
+                1. {currentLang === 'hi' ? 'सामग्री श्रेणी चुनें' : 'Select Material Category'}
+              </label>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#059669' }}>
+                {mat?.name} (₹{baseRate}/kg)
+              </span>
+            </div>
+            <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#64748b' }}>
+              {currentLang === 'hi' ? 'अपनी सामग्री का चयन करें जिससे सटीक बाज़ार भाव मिल सके।' : 'Choose the matching e-waste material to activate official CPCB rates.'}
+            </p>
+
             <div className="category-chip-grid">
-              {materials.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className={`category-chip ${newLotMaterialId === m.id ? 'active' : ''}`}
-                  onClick={() => setNewLotMaterialId(m.id)}
-                >
-                  {m.name}
-                </button>
-              ))}
+              {materials.map((m) => {
+                const isSelected = newLotMaterialId === m.id;
+                const icon = getMaterialIcon(m.name);
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className={`category-chip ${isSelected ? 'active' : ''}`}
+                    onClick={() => setNewLotMaterialId(m.id)}
+                  >
+                    <span style={{ fontSize: '20px' }}>{icon}</span>
+                    <span>{m.name}</span>
+                    {isSelected && (
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          background: '#059669',
+                          color: '#fff',
+                          padding: '1px 6px',
+                          borderRadius: '999px',
+                        }}
+                      >
+                        ✓ Selected
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <div className="form-group">
-            <label>2. {I18N[currentLang].approxWeightLabel}</label>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <input
-                type="number"
-                step="0.1"
-                min="0.5"
-                value={newLotQuantity}
-                onChange={(e) => setNewLotQuantity(e.target.value)}
-                style={{
-                  width: '120px',
-                  padding: '10px 14px',
-                  borderRadius: '10px',
-                  border: '1px solid #c9ded0',
-                  fontSize: '16px',
-                  fontWeight: 700,
-                }}
-              />
-              <span style={{ fontWeight: 700, color: '#335747' }}>kg</span>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {['+1', '+5', '+10', '+25'].map((step) => (
+          {/* Card 3: Approximate Weight */}
+          <div
+            className="studio-panel"
+            style={{
+              background: '#ffffff',
+              borderRadius: '18px',
+              border: '1px solid #e2e8f0',
+              padding: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            <label style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+              2. {I18N[currentLang].approxWeightLabel}
+            </label>
+            <p style={{ margin: '0 0 14px 0', fontSize: '12px', color: '#64748b' }}>
+              {currentLang === 'hi' ? 'अनुमानित वजन दर्ज करें। अंतिम वजन डिजिटल वेइंग कांटे पर होगा।' : 'Enter estimated weight. Verified on certified scale during handover.'}
+            </p>
+
+            <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', width: '160px' }}>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  value={newLotQuantity}
+                  onChange={(e) => setNewLotQuantity(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 42px 12px 16px',
+                    borderRadius: '12px',
+                    border: '2px solid #cbd5e1',
+                    fontSize: '18px',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    outline: 'none',
+                    transition: 'border 0.2s',
+                  }}
+                />
+                <span
+                  style={{
+                    position: 'absolute',
+                    right: '14px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontWeight: 700,
+                    color: '#64748b',
+                    fontSize: '14px',
+                  }}
+                >
+                  kg
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {['+1', '+5', '+10', '+25', '+50'].map((step) => (
                   <button
                     key={step}
                     type="button"
                     className="quick-helper-btn"
-                    style={{ margin: 0 }}
                     onClick={() =>
                       setNewLotQuantity(
-                        String(Math.max(0.5, Number(newLotQuantity) + Number(step)))
+                        String(Math.max(0.5, Number(newLotQuantity || 0) + Number(step)))
                       )
                     }
                   >
@@ -254,169 +462,292 @@ export const CreateLotPage: React.FC<CreateLotPageProps> = ({
             </div>
           </div>
 
-          <div className="form-group">
-            <label>3. {I18N[currentLang].conditionLabel}</label>
+          {/* Card 4: Scrap Condition */}
+          <div
+            className="studio-panel"
+            style={{
+              background: '#ffffff',
+              borderRadius: '18px',
+              border: '1px solid #e2e8f0',
+              padding: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>
+                3. {I18N[currentLang].conditionLabel}
+              </label>
+              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
+                Fair Value Multiplier: {Math.round(multiplier * 100)}%
+              </span>
+            </div>
+            <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#64748b' }}>
+              {currentLang === 'hi' ? 'स्क्रैप की वर्तमान स्थिति चुनें।' : 'Physical grade determines the benchmark recovery multiplier.'}
+            </p>
+
             <div className="condition-selector-group">
               <button
                 type="button"
                 className={`condition-pill ${selectedScrapCondition === 'good' ? 'active' : ''}`}
                 onClick={() => setSelectedScrapCondition('good')}
               >
-                {I18N[currentLang].condGood}
+                <span style={{ fontSize: '18px' }}>🟢</span>
+                <strong>{I18N[currentLang].condGood}</strong>
+                <small style={{ color: '#059669', fontWeight: 700 }}>100% Value</small>
               </button>
+
               <button
                 type="button"
                 className={`condition-pill ${selectedScrapCondition === 'mixed' ? 'active' : ''}`}
                 onClick={() => setSelectedScrapCondition('mixed')}
               >
-                {I18N[currentLang].condMixed}
+                <span style={{ fontSize: '18px' }}>🟡</span>
+                <strong>{I18N[currentLang].condMixed}</strong>
+                <small style={{ color: '#d97706', fontWeight: 700 }}>90% Value</small>
               </button>
+
               <button
                 type="button"
                 className={`condition-pill ${selectedScrapCondition === 'damaged' ? 'active' : ''}`}
                 onClick={() => setSelectedScrapCondition('damaged')}
               >
-                {I18N[currentLang].condDamaged}
+                <span style={{ fontSize: '18px' }}>🟠</span>
+                <strong>{I18N[currentLang].condDamaged}</strong>
+                <small style={{ color: '#ea580c', fontWeight: 700 }}>75% Value</small>
               </button>
+
               <button
                 type="button"
                 className={`condition-pill ${selectedScrapCondition === 'unknown' ? 'active' : ''}`}
                 onClick={() => setSelectedScrapCondition('unknown')}
               >
-                {I18N[currentLang].condUnknown}
+                <span style={{ fontSize: '18px' }}>⚪</span>
+                <strong>{I18N[currentLang].condUnknown}</strong>
+                <small style={{ color: '#64748b', fontWeight: 700 }}>85% Value</small>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Dynamic Valuation & Submission */}
-        <div>
+        {/* Right Column: Live Valuation, Matched Recycler & ESG Panel */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'sticky', top: '24px' }}>
+          {/* Hero Valuation Banner */}
           <div className="estimate-preview-banner">
             <div>
-              <small
+              <span
                 style={{
                   textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  color: '#45745e',
+                  letterSpacing: '0.08em',
+                  color: '#a7f3d0',
+                  fontSize: '11px',
+                  fontWeight: 800,
                 }}
               >
                 {I18N[currentLang].estimatedValuationLabel}
-              </small>
-              <strong>₹ {totalVal}</strong>
-              <span style={{ fontSize: '11px', color: '#38634f' }}>
-                ₹ {Math.round(baseRate * multiplier)} / kg · {newLotQuantity} kg declared
               </span>
+              <strong>₹ {totalVal.toLocaleString('en-IN')}</strong>
+              <div style={{ fontSize: '13px', color: '#d1fae5', marginTop: '4px', fontWeight: 600 }}>
+                ₹ {Math.round(baseRate * multiplier)} / kg · {qty} kg declared
+              </div>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  padding: '4px 10px',
+                  borderRadius: '999px',
+                  fontSize: '11px',
+                  marginTop: '12px',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                }}
+              >
+                <span>🛡️</span>
+                <span>Guaranteed Floor Price</span>
+              </div>
             </div>
-            <span style={{ fontSize: '36px' }}>💰</span>
+            <span style={{ fontSize: '46px', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.2))' }}>💰</span>
           </div>
 
-          {/* Matched Buyers for this Lot */}
-          {matchedBuyers.length > 0 && (
-            <div
-              className="panel"
-              style={{
-                padding: '16px',
-                marginBottom: '16px',
-                border: '1px solid #cce3d5',
-                background: '#fcfdfd',
-                borderRadius: '12px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#065f46' }}>
-                  🤝 {currentLang === 'hi' ? 'अनुशंसित अधिकृत खरीदार' : 'Recommended CPCB Buyers'}
+          {/* AI Matched Recycler Buyers */}
+          <div
+            className="studio-panel"
+            style={{
+              background: '#ffffff',
+              borderRadius: '18px',
+              border: '1px solid #e2e8f0',
+              padding: '20px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '16px' }}>🤝</span>
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>
+                  {currentLang === 'hi' ? 'अनुशंसित अधिकृत खरीदार' : 'Recommended CPCB Buyers'}
                 </h3>
-                <span style={{ fontSize: '10px', background: '#dcfce7', color: '#166534', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                  AI Matched
-                </span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {matchedBuyers.map((b) => {
-                  const isSelected = selectedBuyerId === b.recycler_id;
-                  return (
-                    <div
-                      key={b.recycler_id}
-                      onClick={() => setSelectedBuyerId(b.recycler_id)}
-                      style={{
-                        padding: '10px',
-                        borderRadius: '8px',
-                        border: isSelected ? '2px solid #059669' : '1px solid #e2e8f0',
-                        background: isSelected ? '#f0fdf4' : '#ffffff',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                          <strong style={{ fontSize: '12px', color: '#0f172a' }}>{b.recycler_name}</strong>
-                          <div style={{ fontSize: '11px', color: '#64748b' }}>
-                            📍 {b.location} · {b.pickup_availability.toLowerCase() === 'yes' ? '🚚 Pickup Available' : 'Drop-off'}
-                          </div>
-                        </div>
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            color: '#047857',
-                            background: '#d1fae5',
-                            padding: '2px 6px',
-                            borderRadius: '999px',
-                          }}
-                        >
-                          ★ {b.score}%
-                        </span>
-                      </div>
-                      {isSelected && (
-                        <div style={{ marginTop: '6px', fontSize: '11px', fontWeight: 700, color: '#059669' }}>
-                          ✓ Preferred buyer selected for this lot
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="panel" style={{ padding: '18px', marginBottom: '16px' }}>
-            <h3 style={{ margin: '0 0 10px', fontSize: '14px', color: '#164836' }}>
-              🌱 ESG & Environmental Credits
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div
+              <span
                 style={{
-                  background: '#f2faf4',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: '1px solid #d3ebd9',
+                  fontSize: '11px',
+                  background: '#ecfdf5',
+                  color: '#047857',
+                  padding: '2px 8px',
+                  borderRadius: '999px',
+                  fontWeight: 700,
+                  border: '1px solid #a7f3d0',
                 }}
               >
-                <small style={{ color: '#587a6a', display: 'block', fontSize: '10px' }}>
+                Top AI Match
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {matchedBuyers.map((b) => {
+                const isSelected = selectedBuyerId === b.recycler_id;
+                return (
+                  <div
+                    key={b.recycler_id}
+                    onClick={() => setSelectedBuyerId(b.recycler_id)}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '12px',
+                      border: isSelected ? '2px solid #059669' : '1px solid #e2e8f0',
+                      background: isSelected ? '#f0fdf4' : '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: isSelected ? '0 4px 12px rgba(5, 150, 105, 0.12)' : 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                      <strong style={{ fontSize: '13px', color: '#0f172a' }}>{b.recycler_name}</strong>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          color: '#047857',
+                          background: '#d1fae5',
+                          padding: '2px 6px',
+                          borderRadius: '999px',
+                        }}
+                      >
+                        ★ {b.score}%
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b' }}>
+                      <span>📍 {b.location}</span>
+                      <span>·</span>
+                      <span style={{ color: '#059669', fontWeight: 600 }}>
+                        {b.pickup_availability.toLowerCase() === 'yes' ? '🚚 Pickup Avail' : 'Drop-off'}
+                      </span>
+                    </div>
+
+                    {isSelected && (
+                      <div
+                        style={{
+                          marginTop: '8px',
+                          paddingTop: '8px',
+                          borderTop: '1px dashed #86efac',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: '#047857',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <span>✓</span>
+                        <span>Preferred buyer pre-selected for lot handover</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ESG Environmental Impact */}
+          <div
+            className="studio-panel"
+            style={{
+              background: '#ffffff',
+              borderRadius: '18px',
+              border: '1px solid #e2e8f0',
+              padding: '20px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+              <span style={{ fontSize: '16px' }}>🌱</span>
+              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>
+                {currentLang === 'hi' ? 'पर्यावरणीय प्रभाव क्रेडिट' : 'ESG & Environmental Credits'}
+              </h3>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+              <div
+                style={{
+                  background: '#f0fdf4',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid #bbf7d0',
+                }}
+              >
+                <small style={{ color: '#166534', display: 'block', fontSize: '11px', fontWeight: 600 }}>
                   {I18N[currentLang].co2Saved}
                 </small>
-                <strong style={{ fontSize: '16px', color: '#0e633d' }}>{co2} kg</strong>
+                <strong style={{ fontSize: '18px', color: '#065f46', display: 'block', marginTop: '2px' }}>
+                  {co2} kg
+                </strong>
               </div>
+
               <div
                 style={{
-                  background: '#f2faf4',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: '1px solid #d3ebd9',
+                  background: '#f0fdf4',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid #bbf7d0',
                 }}
               >
-                <small style={{ color: '#587a6a', display: 'block', fontSize: '10px' }}>
+                <small style={{ color: '#166534', display: 'block', fontSize: '11px', fontWeight: 600 }}>
                   {I18N[currentLang].toxicDiverted}
                 </small>
-                <strong style={{ fontSize: '16px', color: '#0e633d' }}>{toxic} kg</strong>
+                <strong style={{ fontSize: '18px', color: '#065f46', display: 'block', marginTop: '2px' }}>
+                  {toxic} kg
+                </strong>
               </div>
             </div>
-            <small style={{ display: 'block', color: '#688478', fontSize: '10px', marginTop: '10px' }}>
-              Certified under CPCB E-Waste (Management) Rules 2022. QR passport issued on handover.
+
+            <small style={{ display: 'block', color: '#64748b', fontSize: '11px', lineHeight: 1.4 }}>
+              Certified under CPCB E-Waste Rules 2022. QR traceability passport generated upon handover.
             </small>
           </div>
 
-          <button className="wizard-btn-primary" onClick={onCreateLot}>
-            {I18N[currentLang].submitLotBtn}
+          {/* Big Primary Submission Button */}
+          <button
+            type="button"
+            className="wizard-btn-primary"
+            onClick={onCreateLot}
+            style={{
+              padding: '16px',
+              fontSize: '15px',
+              fontWeight: 800,
+              borderRadius: '14px',
+              boxShadow: '0 8px 24px rgba(5, 150, 105, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              border: 'none',
+              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+              color: '#ffffff',
+            }}
+          >
+            <span>🚀</span>
+            <span>{I18N[currentLang].submitLotBtn}</span>
           </button>
         </div>
       </div>

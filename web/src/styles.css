@@ -4997,4 +4997,202 @@ h3 {
   }
 }
 
+/* ==========================================================================
+   E-WASTE STUDIO & LOT CREATION PAGE STYLES
+   ========================================================================== */
 
+.lot-studio-layout {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 24px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+@media (max-width: 960px) {
+  .lot-studio-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.studio-panel {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* Photo Dropzone */
+.photo-dropzone {
+  border: 2px dashed #059669;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.photo-dropzone:hover {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #047857;
+  transform: translateY(-1px);
+}
+
+.photo-preview-thumb {
+  max-height: 160px;
+  max-width: 100%;
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  margin-bottom: 10px;
+}
+
+/* Material Category Chips Grid */
+.category-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.category-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 10px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.category-chip:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.category-chip.active {
+  background: #ecfdf5;
+  border-color: #059669;
+  color: #065f46;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+}
+
+/* Condition Selector Group */
+.condition-selector-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.condition-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.condition-pill:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.condition-pill.active {
+  background: #f0fdf4;
+  border-color: #10b981;
+  color: #047857;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
+}
+
+/* Quick Helper Increment Chips */
+.quick-helper-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-helper-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Valuation Estimate Preview Banner */
+.estimate-preview-banner {
+  background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(4, 120, 87, 0.25);
+  margin-bottom: 20px;
+}
+
+.estimate-preview-banner strong {
+  display: block;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+  margin: 4px 0 2px;
+}
+
+.ai-scan-pulse-btn {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.ai-scan-pulse-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4);
+}
+
+.ai-scan-pulse-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
