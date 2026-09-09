@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     # OpenRouter API Key for AI assistance
     openrouter_api_key: str = ""
 
+    # CORS Origins (comma-separated list for production)
+    cors_origins: str = ""
+
     # File Upload Security Settings
     max_upload_size_mb: int = 10
     upload_dir: str = str(BASE_DIR / "uploads")

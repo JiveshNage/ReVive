@@ -50,10 +50,17 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:8001",
 ]
 
+# Append custom CORS origins from environment if provided
+if settings.cors_origins:
+    for origin in settings.cors_origins.split(","):
+        cleaned = origin.strip()
+        if cleaned and cleaned not in ALLOWED_ORIGINS:
+            ALLOWED_ORIGINS.append(cleaned)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$",
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|.*\.vercel\.app|.*\.onrender\.com|.*\.netlify\.app|.*\.railway\.app)(:[0-9]+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
