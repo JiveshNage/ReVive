@@ -323,6 +323,14 @@ export function App() {
     return status;
   };
 
+  // Authentication header helper
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = typeof window !== 'undefined' ? window.localStorage.getItem('revive_token') : null;
+    return token
+      ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      : { 'Content-Type': 'application/json' };
+  };
+
   // Data fetching and sync
   const refreshData = async () => {
     try {
@@ -468,7 +476,7 @@ export function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/lots`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           collector_id: colId,
           material_id: newLotMaterialId,
@@ -508,7 +516,7 @@ export function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/lots`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           collector_id: colId,
           material_id: lotData.materialId,
@@ -539,7 +547,7 @@ export function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/offers`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           lot_id: offerLotId,
           recycler_id: offerRecyclerId,
@@ -569,7 +577,10 @@ export function App() {
 
   const acceptOffer = async (offerId: number) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}/accept`, { method: 'POST' });
+      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}/accept`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
       if (response.ok) await refreshData();
     } catch {
       // Fallback update
@@ -595,7 +606,7 @@ export function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/handover`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload),
       });
 
@@ -620,7 +631,10 @@ export function App() {
 
   const completePayment = async (lotId: number) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/lots/${lotId}/payment`, { method: 'POST' });
+      const response = await fetch(`${API_BASE_URL}/api/lots/${lotId}/payment`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
       if (response.ok) await refreshData();
     } catch {
       setLots((prev) => prev.map((l) => (l.id === lotId ? { ...l, status: 'payment_completed' } : l)));
@@ -806,7 +820,7 @@ export function App() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/recyclers/${recyclerId}/verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ verified: newStatus }),
       });
       if (res.ok) {
@@ -825,7 +839,10 @@ export function App() {
 
   const resolveAnomaly = async (anomalyId: string) => {
     try {
-      await fetch(`${API_BASE_URL}/api/admin/anomalies/${anomalyId}/resolve`, { method: 'POST' });
+      await fetch(`${API_BASE_URL}/api/admin/anomalies/${anomalyId}/resolve`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
     } catch {
       // Non-fatal
     }
@@ -892,6 +909,9 @@ export function App() {
         setActiveRole(userObj.role);
         setCurrentLang(userObj.language);
         window.localStorage.setItem('revive_user', JSON.stringify(userObj));
+        if (data.access_token || data.token) {
+          window.localStorage.setItem('revive_token', data.access_token || data.token);
+        }
         setOnboardingOpen(false);
       } else {
         throw new Error('Fallback demo user');
@@ -1017,6 +1037,9 @@ export function App() {
           setActiveRole(userObj.role);
           setCurrentLang(userObj.language);
           window.localStorage.setItem('revive_user', JSON.stringify(userObj));
+          if (data.access_token || data.token) {
+            window.localStorage.setItem('revive_token', data.access_token || data.token);
+          }
           setOnboardingOpen(false);
         } else {
           setOnboardingStep('profile_setup');
@@ -1121,6 +1144,7 @@ export function App() {
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('revive_user');
+      window.localStorage.removeItem('revive_token');
     }
     setCurrentUser(null);
     setLoginPhone('');

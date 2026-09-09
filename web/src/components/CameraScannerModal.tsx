@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Lang, Material, Recycler, I18N } from '../types';
+import { Lang, Material, Recycler, I18N, API_BASE_URL } from '../types';
 
 export interface CameraScannerModalProps {
   isOpen: boolean;
@@ -133,7 +133,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
       formData.append('location', 'Bhopal');
       formData.append('weight_kg', String(weightKg));
 
-      const res = await fetch('http://localhost:8000/api/ai/predict', {
+      const res = await fetch(`${API_BASE_URL}/api/ai/predict`, {
         method: 'POST',
         body: formData,
       });

@@ -236,7 +236,10 @@ def get_cached_model():
     except ImportError as err:
         raise AIServiceUnavailable("PyTorch dependencies are not installed.") from err
 
-    checkpoint = torch.load(model_path, map_location="cpu", weights_only=False)
+    try:
+        checkpoint = torch.load(model_path, map_location="cpu", weights_only=True)
+    except Exception:
+        checkpoint = torch.load(model_path, map_location="cpu", weights_only=False)
     classes = checkpoint["classes"]
     img_size = checkpoint.get("img_size", 128)
     model = _build_model(classes, checkpoint["state_dict"])

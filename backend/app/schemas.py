@@ -33,6 +33,15 @@ class OfferCreate(BaseModel):
     pickup_available: bool = True
 
 
+class OfferOut(BaseModel):
+    id: int
+    lot_id: int
+    recycler_id: int
+    offer_price: float
+    pickup_available: bool = True
+    status: str
+
+
 class HandoverCreate(BaseModel):
     lot_id: int = Field(..., ge=1)
     collector_id: int = Field(..., ge=1)
