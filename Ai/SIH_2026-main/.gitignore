@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+*.egg-info/
+dist/
+build/
+
+# Virtual environments and local configuration
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+
+# VS Code and local IDE files
+.vscode/
+.idea/
+*.code-workspace
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Temporary and generated files
+*.tmp
+*.temp
+*.log
+.cache/
+tmp/
+temp/
+
+# Large training image data: keep metadata/CSVs, obtain images separately
+/data/waste_images.zip
+/data/balanced_waste_images/
+
+# Keep trained model and reports tracked unless intentionally managed elsewhere

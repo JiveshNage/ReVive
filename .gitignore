@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv*/
+venv/
+.pytest_cache/
+.env
+
+# Database
+*.db
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Build and temp
+*.log
+*.sqlite3
+
+# Node
+node_modules/
+.dist/
+build/
+
+# Flutter
+.dart_tool/
+.packages
+.pub-cache/
+.pubspec.lock
+
+# Docker
+*.local

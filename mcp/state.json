@@ -1,0 +1,5 @@
+{
+  "updated_at": null,
+  "summary": "ReVive backend, web portal, collector flow, shared dataset, and AI adapter are in progress.",
+  "next_step": "Add the trained AI checkpoint, then connect image prediction to the collector flow."
+}

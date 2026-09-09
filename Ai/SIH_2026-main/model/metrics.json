@@ -1,0 +1,32 @@
+{
+    "architecture": "MobileNetV3-Small",
+    "classes": [
+        "Battery",
+        "Keyboard",
+        "Microwave",
+        "Mobile",
+        "Mouse",
+        "PCB",
+        "Player",
+        "Printer",
+        "Television",
+        "Washing Machine",
+        "cardboard",
+        "glass",
+        "metal",
+        "organic",
+        "paper",
+        "plastic",
+        "trash"
+    ],
+    "total_images": 6782,
+    "train_images": 4743,
+    "validation_images": 1019,
+    "test_images": 1020,
+    "best_validation_accuracy": 0.9175662414131501,
+    "test_accuracy": 0.9225490196078432,
+    "weighted_precision": 0.9242335766145481,
+    "weighted_recall": 0.9225490196078432,
+    "weighted_f1": 0.9225086316177479,
+    "device": "cpu"
+}
