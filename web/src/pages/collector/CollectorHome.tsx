@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lang, ActivePage, UserProfile, Lot, Material, Recycler, I18N } from '../../types';
+import { Lang, ActivePage, UserProfile, Lot, Material, Recycler, RecyclerMatch, I18N } from '../../types';
 
 export interface CollectorHomeProps {
   currentLang: Lang;
@@ -39,6 +39,7 @@ export interface CollectorHomeProps {
       price_max: number;
       samples?: number;
     } | null;
+    recycler_matches?: Array<RecyclerMatch>;
   } | null;
   onPredictMaterialWithAi: () => void;
   onApplyAiPredictionToLot: () => void;
@@ -323,6 +324,42 @@ export const CollectorHome: React.FC<CollectorHomeProps> = ({
                   <div style={{ color: '#4b5563', fontSize: '11px', marginTop: '2px' }}>
                     Range: ₹ {aiResult.pricing.price_min} – ₹ {aiResult.pricing.price_max} (Median: ₹{' '}
                     {aiResult.pricing.price_per_kg_median}/kg from regional benchmarks)
+                  </div>
+                </div>
+              )}
+
+              {/* AI Matched Recyclers */}
+              {aiResult.recycler_matches && aiResult.recycler_matches.length > 0 && (
+                <div style={{ marginTop: '10px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#065f46', marginBottom: '6px' }}>
+                    🤝 {currentLang === 'hi' ? 'निकटतम मिलान किए गए रीसाइक्लर:' : 'Top AI Matched Recyclers:'}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {aiResult.recycler_matches.slice(0, 2).map((m) => (
+                      <div
+                        key={m.recycler_id}
+                        style={{
+                          background: '#ffffff',
+                          border: '1px solid #dcfce7',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          fontSize: '11px',
+                        }}
+                      >
+                        <div>
+                          <strong>{m.recycler_name}</strong>
+                          <div style={{ color: '#64748b' }}>
+                            📍 {m.location} · {m.pickup_availability.toLowerCase() === 'yes' ? '🚚 Pickup Available' : 'Drop-off'}
+                          </div>
+                        </div>
+                        <span style={{ fontWeight: 800, color: '#047857', background: '#d1fae5', padding: '2px 6px', borderRadius: '4px' }}>
+                          ★ {m.score}%
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

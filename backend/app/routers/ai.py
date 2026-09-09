@@ -224,8 +224,20 @@ def get_price_trends(category: str = "PCB", city: str = "Bhopal"):
 
 
 @router.get("/recyclers/match", response_model=list[RecyclerMatchOut])
-def get_recycler_matches(category: str = "PCB", location: str = "Bhopal", limit: int = 5):
-    return match_recyclers(category, location, limit=limit)
+def get_recycler_matches(
+    category: str = "PCB",
+    location: str = "Bhopal",
+    limit: int = 12,
+    query: str | None = None,
+    pickup_only: bool = False,
+):
+    return match_recyclers(
+        category=category,
+        location=location,
+        limit=limit,
+        query=query,
+        pickup_only=pickup_only,
+    )
 
 
 @router.get("/safety/guidance", response_model=SafetyGuidanceResponse)

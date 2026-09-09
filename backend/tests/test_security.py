@@ -148,16 +148,21 @@ class TestSecurityHardening(unittest.TestCase):
     # 3. Secrets Sanitization
     # -------------------------------------------------------------------------
     def test_secrets_sanitized_in_config(self):
-        # Verify default password in settings is empty or placeholder, not a hardcoded secret
-        self.assertNotIn("xsmtpsib", settings.smtp_password)
+        # Verify default settings in codebase has no hardcoded credentials
         from app.config import Settings
         fresh_settings = Settings(_env_file=None)
+        self.assertEqual(fresh_settings.smtp_password, "")
         self.assertEqual(fresh_settings.openrouter_api_key, "")
 
     def test_send_email_gracefully_handles_empty_credentials(self):
         # With empty SMTP credentials, send_email should return False gracefully without throwing an exception
-        result = send_email("test@example.com", "Subject", "<p>Test</p>")
-        self.assertFalse(result)
+        original_pwd = settings.smtp_password
+        try:
+            settings.smtp_password = ""
+            result = send_email("test@example.com", "Subject", "<p>Test</p>")
+            self.assertFalse(result)
+        finally:
+            settings.smtp_password = original_pwd
 
 
 if __name__ == "__main__":

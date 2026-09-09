@@ -1554,8 +1554,13 @@ export function App() {
             {activePage === 'find_recycler' && (
               <FindRecyclerPage
                 currentLang={currentLang}
+                initialLocation={currentUser?.location || selectedCity || 'Bhopal'}
                 onNavigateCreateLot={() => setActivePage('create_lot')}
                 onRequestPickup={(recId) => {
+                  setOfferRecyclerId(recId);
+                  setActivePage('create_lot');
+                }}
+                onSelectRecyclerForLot={(recId) => {
                   setOfferRecyclerId(recId);
                   setActivePage('create_lot');
                 }}

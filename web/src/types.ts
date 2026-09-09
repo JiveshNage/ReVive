@@ -27,6 +27,19 @@ export type Recycler = {
   contact_phone?: string | null;
 };
 
+export type RecyclerMatch = {
+  recycler_id: number;
+  recycler_name: string;
+  location: string;
+  accepted_materials: string;
+  authorization_status: string;
+  contact?: string | null;
+  rate?: string | null;
+  pickup_availability: string;
+  service_area: string;
+  score: number;
+};
+
 export type Offer = {
   id: number;
   lot_id: number;
