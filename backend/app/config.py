@@ -36,7 +36,12 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = 10
     upload_dir: str = str(BASE_DIR / "uploads")
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=False)
+    model_config = SettingsConfigDict(
+        env_file=(str(BASE_DIR / ".env"), str(BASE_DIR.parent / ".env")),
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
 
 @lru_cache
