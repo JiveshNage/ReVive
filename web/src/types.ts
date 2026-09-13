@@ -205,12 +205,432 @@ export const fallbackLots: Lot[] = [
 ];
 
 export const fallbackRecyclers: Recycler[] = [
-  { id: 1, name: 'EcoCycle Pune', verified: true, location: 'Pune, Maharashtra', contact_phone: '9876540001' },
-  { id: 2, name: 'GreenLoop Nashik', verified: true, location: 'Nashik, Maharashtra', contact_phone: '9876540002' },
+  { id: 1, name: 'EcoCycle Pune Solutions Pvt Ltd', verified: true, location: 'Bhosari MIDC, Pune, Maharashtra', contact_phone: '9876540001' },
+  { id: 2, name: 'GreenLoop Central MP Recyclers', verified: true, location: 'Mandideep Industrial Area, Bhopal, MP', contact_phone: '9876540002' },
+  { id: 3, name: 'MahaRecycle Industrial Hub', verified: true, location: 'Dharavi Circular Hub, Mumbai, Maharashtra', contact_phone: '9876540003' },
+  { id: 4, name: 'CleanEarth Capital Recyclers', verified: true, location: 'Mayapuri Green Cluster, New Delhi', contact_phone: '9876540004' },
 ];
 
 export const fallbackOffers: Offer[] = [
-  { id: 1, lot_id: 102, recycler_id: 1, offer_price: 1450, pickup_available: true, status: 'pending' },
+  { id: 1, lot_id: 102, recycler_id: 1, offer_price: 1450, pickup_available: true, status: 'accepted' },
+  { id: 2, lot_id: 103, recycler_id: 2, offer_price: 1850, pickup_available: true, status: 'accepted' },
+];
+
+// ============================================================================
+// Live Telemetry, Handover Journey & Payment Tracking Models
+// ============================================================================
+
+export type CollectorLocation = {
+  id: number;
+  name: string;
+  code: string;
+  phone: string;
+  area: string;
+  city: string;
+  state: string;
+  region: 'Bhopal' | 'Pune' | 'Mumbai' | 'Delhi';
+  coordinates: { lat: number; lng: number; xPercent: number; yPercent: number };
+  active_lots_count: number;
+  total_weight_kg: number;
+  status: 'active' | 'in_transit' | 'idle';
+  assigned_recycler?: string;
+  last_ping: string;
+  battery_level: number;
+};
+
+export type HandoverJourneyStep = {
+  stage: number;
+  title: string;
+  subtitle: string;
+  location: string;
+  timestamp: string;
+  status: 'completed' | 'current' | 'pending';
+  coordinates?: string;
+};
+
+export type HandoverJourney = {
+  journey_id: string;
+  lot_id: number;
+  material_name: string;
+  collector_name: string;
+  collector_code: string;
+  collector_area: string;
+  recycler_name: string;
+  recycler_license: string;
+  driver_name: string;
+  driver_phone: string;
+  vehicle_reg: string;
+  vehicle_type: string;
+  current_stage: number; // 1 to 6
+  eta_minutes: number;
+  remaining_km: number;
+  speed_kmh: number;
+  catalogued_weight_kg: number;
+  tare_weight_kg: number;
+  gross_weight_kg: number;
+  verified_net_weight_kg: number;
+  weight_discrepancy_kg: number;
+  discrepancy_percentage: number;
+  is_flagged: boolean;
+  payment_status: 'pending' | 'escrow_locked' | 'settled';
+  steps: HandoverJourneyStep[];
+  passport_id?: string;
+  certificate_hash?: string;
+};
+
+export type PaymentRecord = {
+  payment_id: string;
+  utr_number: string;
+  lot_id: number;
+  collector_name: string;
+  collector_code: string;
+  collector_phone: string;
+  recycler_name: string;
+  recycler_license: string;
+  method: 'upi' | 'imps' | 'escrow' | 'cash';
+  account_or_vpa: string;
+  material_name: string;
+  net_weight_kg: number;
+  rate_per_kg: number;
+  msp_benchmark_rate: number;
+  amount_inr: number;
+  is_below_msp: boolean;
+  status: 'settled' | 'escrow_locked' | 'processing' | 'flagged';
+  settlement_latency_seconds: number;
+  timestamp: string;
+  passport_id: string;
+};
+
+export const fallbackCollectors: CollectorLocation[] = [
+  {
+    id: 1,
+    name: 'Ram Yadav',
+    code: 'REV-COL-2026-1024',
+    phone: '+91 98765 43210',
+    area: 'Karond Scrap Mandi, Ward 14',
+    city: 'Bhopal',
+    state: 'Madhya Pradesh',
+    region: 'Bhopal',
+    coordinates: { lat: 23.2599, lng: 77.4126, xPercent: 44, yPercent: 48 },
+    active_lots_count: 3,
+    total_weight_kg: 34.5,
+    status: 'in_transit',
+    assigned_recycler: 'GreenLoop Central MP Recyclers',
+    last_ping: 'Just now · GPS ±3m',
+    battery_level: 94,
+  },
+  {
+    id: 2,
+    name: 'Santosh Shinde',
+    code: 'REV-COL-2026-1048',
+    phone: '+91 98221 09841',
+    area: 'Bhosari Gaonthan, Ward 22',
+    city: 'Pune',
+    state: 'Maharashtra',
+    region: 'Pune',
+    coordinates: { lat: 18.6279, lng: 73.8475, xPercent: 32, yPercent: 62 },
+    active_lots_count: 2,
+    total_weight_kg: 28.0,
+    status: 'active',
+    assigned_recycler: 'EcoCycle Pune Solutions Pvt Ltd',
+    last_ping: '2 mins ago · GPS ±5m',
+    battery_level: 82,
+  },
+  {
+    id: 3,
+    name: 'Mohammad Rafiq',
+    code: 'REV-COL-2026-1072',
+    phone: '+91 99304 55120',
+    area: '13th Compound, Dharavi Scrap Cluster',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    region: 'Mumbai',
+    coordinates: { lat: 19.0434, lng: 72.8567, xPercent: 24, yPercent: 58 },
+    active_lots_count: 5,
+    total_weight_kg: 62.4,
+    status: 'active',
+    assigned_recycler: 'MahaRecycle Industrial Hub',
+    last_ping: '1 min ago · GPS ±4m',
+    battery_level: 76,
+  },
+  {
+    id: 4,
+    name: 'Devender Kumar',
+    code: 'REV-COL-2026-1099',
+    phone: '+91 98112 33490',
+    area: 'Mayapuri Phase 2 Metal Market',
+    city: 'New Delhi',
+    state: 'Delhi',
+    region: 'Delhi',
+    coordinates: { lat: 28.6366, lng: 77.1265, xPercent: 38, yPercent: 24 },
+    active_lots_count: 1,
+    total_weight_kg: 15.2,
+    status: 'idle',
+    assigned_recycler: 'CleanEarth Capital Recyclers',
+    last_ping: '6 mins ago · GPS ±6m',
+    battery_level: 65,
+  },
+  {
+    id: 5,
+    name: 'Gopal Sahu',
+    code: 'REV-COL-2026-1108',
+    phone: '+91 97554 11029',
+    area: 'Govindpura Industrial Yard',
+    city: 'Bhopal',
+    state: 'Madhya Pradesh',
+    region: 'Bhopal',
+    coordinates: { lat: 23.2384, lng: 77.4589, xPercent: 49, yPercent: 51 },
+    active_lots_count: 2,
+    total_weight_kg: 19.8,
+    status: 'active',
+    assigned_recycler: 'GreenLoop Central MP Recyclers',
+    last_ping: '3 mins ago · GPS ±4m',
+    battery_level: 89,
+  },
+];
+
+export const fallbackHandoverJourneys: HandoverJourney[] = [
+  {
+    journey_id: 'HJ-2026-MP-0491',
+    lot_id: 102,
+    material_name: 'Printed Circuit Board (Motherboards & Servers)',
+    collector_name: 'Ram Yadav',
+    collector_code: 'REV-COL-2026-1024',
+    collector_area: 'Karond Mandi, Bhopal',
+    recycler_name: 'GreenLoop Central MP Recyclers',
+    recycler_license: 'CPCB/EW/2024/0981',
+    driver_name: 'Sunil Kumar',
+    driver_phone: '+91 98930 11223',
+    vehicle_reg: 'MP 04 GA 8821',
+    vehicle_type: 'Tata Ace EV (Zero-Emission)',
+    current_stage: 4, // In transit
+    eta_minutes: 14,
+    remaining_km: 3.4,
+    speed_kmh: 28,
+    catalogued_weight_kg: 5.4,
+    tare_weight_kg: 1.2,
+    gross_weight_kg: 6.6,
+    verified_net_weight_kg: 5.4,
+    weight_discrepancy_kg: 0.0,
+    discrepancy_percentage: 0.0,
+    is_flagged: false,
+    payment_status: 'escrow_locked',
+    steps: [
+      {
+        stage: 1,
+        title: 'Lot Geotagged & Catalogued',
+        subtitle: 'Collector initiated AI scan and locked weight at scrap yard',
+        location: 'Karond Mandi, Bhopal (23.2599°N, 77.4126°E)',
+        timestamp: '10:15 AM',
+        status: 'completed',
+      },
+      {
+        stage: 2,
+        title: 'Recycler Matched & Offer Locked',
+        subtitle: 'CPCB MSP of ₹403/kg guaranteed; ₹2,176 locked in escrow',
+        location: 'ReVive Escrow Clearing Protocol',
+        timestamp: '10:28 AM',
+        status: 'completed',
+      },
+      {
+        stage: 3,
+        title: 'EV Pickup Vehicle Dispatched',
+        subtitle: 'Tata Ace EV (MP 04 GA 8821) departed depot with certified scale',
+        location: 'Mandideep Recycler Hub (Gate 2)',
+        timestamp: '10:45 AM',
+        status: 'completed',
+      },
+      {
+        stage: 4,
+        title: 'In Transit Telemetry (Live GPS)',
+        subtitle: 'Speed: 28 km/h · ETA: 14 Mins · 3.4 km remaining',
+        location: 'Hoshangabad Highway Toll Point (Checkpoint 3)',
+        timestamp: '11:02 AM (Active)',
+        status: 'current',
+      },
+      {
+        stage: 5,
+        title: 'Digital Scale Weighbridge Check',
+        subtitle: 'Dual confirmation: Tare weight & net scrap verification',
+        location: 'Collector Scrap Yard Weigh Station',
+        timestamp: 'Pending Arrival',
+        status: 'pending',
+      },
+      {
+        stage: 6,
+        title: 'Settled & CPCB Waste Passport Issued',
+        subtitle: 'Instant UPI settlement & statutory SHA-256 traceability minting',
+        location: 'CPCB National Circular Registry',
+        timestamp: 'Pending Weigh-in',
+        status: 'pending',
+      },
+    ],
+    passport_id: 'REV-2026-LOT-0102',
+    certificate_hash: 'e48a6cf712bc90a8813ef046522c19318b76dfb2',
+  },
+  {
+    journey_id: 'HJ-2026-MH-0812',
+    lot_id: 103,
+    material_name: 'Smartphones & Feature Phones (High Value)',
+    collector_name: 'Santosh Shinde',
+    collector_code: 'REV-COL-2026-1048',
+    collector_area: 'Bhosari, Pune',
+    recycler_name: 'EcoCycle Pune Solutions Pvt Ltd',
+    recycler_license: 'CPCB/EW/2024/0412',
+    driver_name: 'Sachin Waghmare',
+    driver_phone: '+91 98230 44556',
+    vehicle_reg: 'MH 12 QX 4509',
+    vehicle_type: 'Mahindra Zor Grand EV',
+    current_stage: 5, // At scale
+    eta_minutes: 0,
+    remaining_km: 0.0,
+    speed_kmh: 0,
+    catalogued_weight_kg: 12.1,
+    tare_weight_kg: 2.1,
+    gross_weight_kg: 14.2,
+    verified_net_weight_kg: 12.1,
+    weight_discrepancy_kg: 0.0,
+    discrepancy_percentage: 0.0,
+    is_flagged: false,
+    payment_status: 'escrow_locked',
+    steps: [
+      { stage: 1, title: 'Lot Geotagged & Catalogued', subtitle: 'Initial lot registered with photo evidence', location: 'Bhosari Scrap Mandi, Pune', timestamp: '09:30 AM', status: 'completed' },
+      { stage: 2, title: 'Recycler Matched & Offer Locked', subtitle: 'Offer accepted at ₹210/kg (₹2,541)', location: 'Pune Circular Clearinghouse', timestamp: '09:42 AM', status: 'completed' },
+      { stage: 3, title: 'EV Pickup Vehicle Dispatched', subtitle: 'Vehicle en-route to Bhosari', location: 'MIDC Gate 4', timestamp: '10:00 AM', status: 'completed' },
+      { stage: 4, title: 'Transit Completed', subtitle: 'Vehicle arrived at collection site', location: 'Bhosari Scrap Yard', timestamp: '10:35 AM', status: 'completed' },
+      { stage: 5, title: 'Scale Weighbridge Sync', subtitle: 'Digital scale docked; tare calibrated at 2.1 kg', location: 'Collector Premises', timestamp: '10:48 AM (Active)', status: 'current' },
+      { stage: 6, title: 'Settlement & Passport', subtitle: 'Awaiting digital signature & UPI release', location: 'CPCB National Ledger', timestamp: 'Pending Payment', status: 'pending' },
+    ],
+    passport_id: 'REV-2026-LOT-0103',
+    certificate_hash: '90fa41b773c2a9018eecba094412ef65b12876da',
+  },
+  {
+    journey_id: 'HJ-2026-DL-0314',
+    lot_id: 101,
+    material_name: 'Copper Wire Harness & Cables',
+    collector_name: 'Devender Kumar',
+    collector_code: 'REV-COL-2026-1099',
+    collector_area: 'Mayapuri Phase 2, Delhi',
+    recycler_name: 'CleanEarth Capital Recyclers',
+    recycler_license: 'CPCB/EW/2024/0118',
+    driver_name: 'Vikas Mehra',
+    driver_phone: '+91 98100 88771',
+    vehicle_reg: 'DL 1L AB 9081',
+    vehicle_type: 'Piaggio Ape E-City EV',
+    current_stage: 6, // Completed
+    eta_minutes: 0,
+    remaining_km: 0.0,
+    speed_kmh: 0,
+    catalogued_weight_kg: 8.5,
+    tare_weight_kg: 1.5,
+    gross_weight_kg: 10.0,
+    verified_net_weight_kg: 8.5,
+    weight_discrepancy_kg: 0.0,
+    discrepancy_percentage: 0.0,
+    is_flagged: false,
+    payment_status: 'settled',
+    steps: [
+      { stage: 1, title: 'Lot Geotagged', subtitle: 'Copper wire bundle catalogued', location: 'Mayapuri Market', timestamp: 'Yesterday', status: 'completed' },
+      { stage: 2, title: 'Offer Accepted', subtitle: 'Rate locked at ₹145/kg (₹1,232.50)', location: 'Delhi NCR Exchange', timestamp: 'Yesterday', status: 'completed' },
+      { stage: 3, title: 'EV Dispatched', subtitle: 'Pickup vehicle assigned', location: 'Okhla Recycler Facility', timestamp: 'Yesterday', status: 'completed' },
+      { stage: 4, title: 'Transit Completed', subtitle: 'Arrival logged at Mayapuri', location: 'Collector Depot', timestamp: 'Yesterday', status: 'completed' },
+      { stage: 5, title: 'Scale Handover Verified', subtitle: 'Net weight 8.5 kg verified without discrepancy', location: 'Digital Scale #201', timestamp: 'Yesterday', status: 'completed' },
+      { stage: 6, title: 'UPI Settled & Passport Issued', subtitle: 'UTR: UPI/REV/2026/782194 · Passport Active', location: 'CPCB National Ledger', timestamp: 'Yesterday', status: 'completed' },
+    ],
+    passport_id: 'REV-2026-LOT-0101',
+    certificate_hash: '77bc901aef42019b88231cda08912ef65b12876de',
+  },
+];
+
+export const fallbackPaymentRecords: PaymentRecord[] = [
+  {
+    payment_id: 'TXN-2026-98401',
+    utr_number: 'UPI/REV/2026/849201',
+    lot_id: 101,
+    collector_name: 'Devender Kumar',
+    collector_code: 'REV-COL-2026-1099',
+    collector_phone: '+91 98112 33490',
+    recycler_name: 'CleanEarth Capital Recyclers',
+    recycler_license: 'CPCB/EW/2024/0118',
+    method: 'upi',
+    account_or_vpa: 'devender.kabadi@paytm',
+    material_name: 'Copper Wire Harness & Cables',
+    net_weight_kg: 8.5,
+    rate_per_kg: 145.0,
+    msp_benchmark_rate: 145.0,
+    amount_inr: 1232.5,
+    is_below_msp: false,
+    status: 'settled',
+    settlement_latency_seconds: 38,
+    timestamp: '2026-09-09 16:42:18',
+    passport_id: 'REV-2026-LOT-0101',
+  },
+  {
+    payment_id: 'TXN-2026-98382',
+    utr_number: 'IMPS/REV/2026/721980',
+    lot_id: 99,
+    collector_name: 'Mohammad Rafiq',
+    collector_code: 'REV-COL-2026-1072',
+    collector_phone: '+91 99304 55120',
+    recycler_name: 'MahaRecycle Industrial Hub',
+    recycler_license: 'CPCB/EW/2024/0744',
+    method: 'imps',
+    account_or_vpa: 'HDFC Bank ······4092 (HDFC0000240)',
+    material_name: 'Lithium-Ion Phone Batteries',
+    net_weight_kg: 18.0,
+    rate_per_kg: 105.0,
+    msp_benchmark_rate: 101.0,
+    amount_inr: 1890.0,
+    is_below_msp: false,
+    status: 'settled',
+    settlement_latency_seconds: 44,
+    timestamp: '2026-09-09 14:15:02',
+    passport_id: 'REV-2026-LOT-0099',
+  },
+  {
+    payment_id: 'TXN-2026-98365',
+    utr_number: 'ESCROW/REV/2026/619024',
+    lot_id: 102,
+    collector_name: 'Ram Yadav',
+    collector_code: 'REV-COL-2026-1024',
+    collector_phone: '+91 98765 43210',
+    recycler_name: 'GreenLoop Central MP Recyclers',
+    recycler_license: 'CPCB/EW/2024/0981',
+    method: 'escrow',
+    account_or_vpa: 'State Bank of India ······8812 (SBIN0001240)',
+    material_name: 'Printed Circuit Board (Motherboard & Server)',
+    net_weight_kg: 5.4,
+    rate_per_kg: 403.0,
+    msp_benchmark_rate: 403.0,
+    amount_inr: 2176.2,
+    is_below_msp: false,
+    status: 'escrow_locked',
+    settlement_latency_seconds: 0,
+    timestamp: '2026-09-10 10:28:44',
+    passport_id: 'REV-2026-LOT-0102',
+  },
+  {
+    payment_id: 'TXN-2026-98350',
+    utr_number: 'ESCROW/REV/2026/518901',
+    lot_id: 103,
+    collector_name: 'Santosh Shinde',
+    collector_code: 'REV-COL-2026-1048',
+    collector_phone: '+91 98221 09841',
+    recycler_name: 'EcoCycle Pune Solutions Pvt Ltd',
+    recycler_license: 'CPCB/EW/2024/0412',
+    method: 'escrow',
+    account_or_vpa: 'Bank of Maharashtra ······1149 (MAHB0000082)',
+    material_name: 'Smartphones & Feature Phones',
+    net_weight_kg: 12.1,
+    rate_per_kg: 210.0,
+    msp_benchmark_rate: 210.0,
+    amount_inr: 2541.0,
+    is_below_msp: false,
+    status: 'escrow_locked',
+    settlement_latency_seconds: 0,
+    timestamp: '2026-09-10 09:42:15',
+    passport_id: 'REV-2026-LOT-0103',
+  },
 ];
 
 export const I18N = {

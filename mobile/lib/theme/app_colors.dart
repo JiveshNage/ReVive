@@ -24,6 +24,7 @@ class AppColors {
   static const Color borderSubtle = Color(0xFFF1F5F9);
 
   // Functional Accents
+  static const Color accent = Color(0xFF0284C7);
   static const Color accentGreen = Color(0xFF10B981);
   static const Color accentBlue = Color(0xFF0284C7);
   static const Color accentYellow = Color(0xFFD97706);

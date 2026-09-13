@@ -14,6 +14,17 @@ import { AdminKpis } from './AdminKpis';
 import { AdminRecyclers } from './AdminRecyclers';
 import { AdminAnomalies } from './AdminAnomalies';
 import { AdminLots } from './AdminLots';
+import { AdminCollectorTracking } from './AdminCollectorTracking';
+import { AdminHandoverJourney } from './AdminHandoverJourney';
+import { AdminPaymentTracking } from './AdminPaymentTracking';
+import {
+  CollectorLocation,
+  HandoverJourney,
+  PaymentRecord,
+  fallbackCollectors,
+  fallbackHandoverJourneys,
+  fallbackPaymentRecords,
+} from '../../types';
 
 export interface AdminPortalProps {
   currentLang: Lang;
@@ -26,8 +37,8 @@ export interface AdminPortalProps {
   offers: Offer[];
   verifiedRecyclerCount: number;
   recyclers: Recycler[];
-  adminTab: 'kpis' | 'recyclers' | 'anomalies' | 'lots';
-  setAdminTab: (tab: 'kpis' | 'recyclers' | 'anomalies' | 'lots') => void;
+  adminTab: 'kpis' | 'radar' | 'journey' | 'payments' | 'recyclers' | 'anomalies' | 'lots';
+  setAdminTab: (tab: 'kpis' | 'radar' | 'journey' | 'payments' | 'recyclers' | 'anomalies' | 'lots') => void;
   adminAnomalies: AdminAnomaly[];
   resolveAnomaly: (id: string) => Promise<void>;
   verificationView: 'all' | 'pending';
@@ -38,6 +49,9 @@ export interface AdminPortalProps {
   materials: Material[];
   getStatusLabel: (status: string) => string;
   setTraceabilityLotId: (lotId: number) => void;
+  collectors?: CollectorLocation[];
+  handoverJourneys?: HandoverJourney[];
+  payments?: PaymentRecord[];
 }
 
 export const AdminPortal: React.FC<AdminPortalProps> = ({
@@ -63,6 +77,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   materials,
   getStatusLabel,
   setTraceabilityLotId,
+  collectors,
+  handoverJourneys,
+  payments,
 }) => {
   return (
     <section className="admin-dashboard">
@@ -89,7 +106,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
         </div>
 
-        <div className="stat-card tint-yellow">
+        <div className="stat-card tint-yellow" onClick={() => setAdminTab('payments')} style={{ cursor: 'pointer' }}>
           <span className="stat-symbol">₹</span>
           <div>
             <strong>
@@ -102,29 +119,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
         </div>
 
-        <div className="stat-card tint-blue">
-          <span className="stat-symbol">🌱</span>
+        <div className="stat-card tint-blue" onClick={() => setAdminTab('radar')} style={{ cursor: 'pointer' }}>
+          <span className="stat-symbol">📍</span>
           <div>
-            <strong>
-              {adminMetrics
-                ? `${adminMetrics.co2_saved_kg} kg`
-                : `${(lots.reduce((acc, l) => acc + l.quantity_kg, 0) * 1.44).toFixed(1)} kg`}
-            </strong>
-            <span>CO₂ Emissions Abated</span>
-            <small>1.44 kg CO₂ per kg diverted</small>
+            <strong>{(collectors || fallbackCollectors).length} Pickers</strong>
+            <span>Live Collector Radar</span>
+            <small>Geospatial fleet mesh</small>
           </div>
         </div>
 
-        <div className="stat-card tint-purple">
-          <span className="stat-symbol">🛡</span>
+        <div className="stat-card tint-purple" onClick={() => setAdminTab('journey')} style={{ cursor: 'pointer' }}>
+          <span className="stat-symbol">🚚</span>
           <div>
-            <strong>
-              {adminMetrics
-                ? `${adminMetrics.toxic_metals_diverted_kg} kg`
-                : `${(lots.reduce((acc, l) => acc + l.quantity_kg, 0) * 0.12).toFixed(1)} kg`}
-            </strong>
-            <span>Toxic Metals Isolated</span>
-            <small>Lead, Cadmium, Mercury safely captured</small>
+            <strong>{(handoverJourneys || fallbackHandoverJourneys).length} Custodies</strong>
+            <span>Handover Journeys</span>
+            <small>Scale tare & net audit</small>
           </div>
         </div>
 
@@ -142,6 +151,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         </div>
       </section>
 
+
       {/* Subpage View Switching */}
       {adminTab === 'kpis' && (
         <AdminKpis
@@ -152,6 +162,24 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           openPassport={openPassport}
           lots={lots}
           adminAnomalies={adminAnomalies}
+        />
+      )}
+
+      {adminTab === 'radar' && (
+        <AdminCollectorTracking collectors={collectors || fallbackCollectors} />
+      )}
+
+      {adminTab === 'journey' && (
+        <AdminHandoverJourney
+          journeys={handoverJourneys || fallbackHandoverJourneys}
+          openPassport={openPassport}
+        />
+      )}
+
+      {adminTab === 'payments' && (
+        <AdminPaymentTracking
+          payments={payments || fallbackPaymentRecords}
+          openPassport={openPassport}
         />
       )}
 

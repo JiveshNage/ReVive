@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:revive_mobile/app.dart';
 
 void main() {
-  testWidgets('ReVive app smoke test - Header, Dashboard and Navigation tabs', (WidgetTester tester) async {
+  testWidgets('First-time app launch shows Welcome/Auth screen with Login and Register', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(() => tester.view.resetPhysicalSize());
@@ -11,21 +11,23 @@ void main() {
     await tester.pumpWidget(const ReViveApp());
     await tester.pumpAndSettle();
 
-    // Verify Brand Header
-    expect(find.text('ReVive'), findsOneWidget);
-    expect(find.text('Online'), findsOneWidget);
-    expect(find.text('ID: REV-COL-2026-1024'), findsOneWidget);
+    // Verify Welcome / Authentication Screen on first launch
+    expect(find.text('ReVive Collector'), findsOneWidget);
+    expect(find.text('Collector Login (लॉगिन)'), findsOneWidget);
+    expect(find.text('New Registration (पंजीकरण)'), findsOneWidget);
+    expect(find.text('Continue as Ram Yadav (Collector)'), findsOneWidget);
 
-    // Verify Navigation Bar items
+    // Authenticate via collector demo
+    await tester.tap(find.text('Continue as Ram Yadav (Collector)'));
+    await tester.pumpAndSettle();
+
+    // Verify Main Dashboard is reached
+    expect(find.text('ReVive'), findsOneWidget);
+    expect(find.text('ID: REV-COL-2026-1024'), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Rates'), findsOneWidget);
     expect(find.text('Lots'), findsOneWidget);
     expect(find.text('Ledger'), findsOneWidget);
-
-    // Verify Home Screen Content (Default Hindi for informal collectors)
-    expect(find.text('लाइव एआई कैमरा विज़न स्कैनर'), findsOneWidget);
-    expect(find.text('Lifetime Earnings'), findsOneWidget);
-    expect(find.text('E-Waste Collected'), findsOneWidget);
   });
 
   testWidgets('Language toggle in AppHeader switches text between Hindi, Marathi and English', (WidgetTester tester) async {
@@ -34,6 +36,10 @@ void main() {
     addTearDown(() => tester.view.resetPhysicalSize());
 
     await tester.pumpWidget(const ReViveApp());
+    await tester.pumpAndSettle();
+
+    // Authenticate
+    await tester.tap(find.text('Continue as Ram Yadav (Collector)'));
     await tester.pumpAndSettle();
 
     // Default is Hindi
@@ -61,6 +67,10 @@ void main() {
     addTearDown(() => tester.view.resetPhysicalSize());
 
     await tester.pumpWidget(const ReViveApp());
+    await tester.pumpAndSettle();
+
+    // Authenticate
+    await tester.tap(find.text('Continue as Ram Yadav (Collector)'));
     await tester.pumpAndSettle();
 
     // Switch to Rates Tab

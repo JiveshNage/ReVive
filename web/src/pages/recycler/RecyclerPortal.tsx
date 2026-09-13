@@ -1,15 +1,18 @@
-import React from 'react';
-import { UserProfile, Lot, Material, Offer } from '../../types';
+import React, { useState } from 'react';
+import { UserProfile, Lot, Material, Offer, CollectorLocation, fallbackCollectors } from '../../types';
 import { RecyclerBrowseLots } from './RecyclerBrowseLots';
 import { RecyclerOffers } from './RecyclerOffers';
 import { RecyclerPickups } from './RecyclerPickups';
 import { RecyclerPassports } from './RecyclerPassports';
 import { RecyclerProfile } from './RecyclerProfile';
+import { RecyclerCollectorRadar } from './RecyclerCollectorRadar';
+import { RecyclerScaleTerminal } from './RecyclerScaleTerminal';
+import { RecyclerPaymentTerminal } from './RecyclerPaymentTerminal';
 
 export interface RecyclerPortalProps {
   currentUser: UserProfile | null;
-  recyclerSubView: 'browse' | 'bids' | 'pickups' | 'passports' | 'profile';
-  setRecyclerSubView: (view: 'browse' | 'bids' | 'pickups' | 'passports' | 'profile') => void;
+  recyclerSubView: 'radar' | 'browse' | 'scale' | 'payments' | 'bids' | 'pickups' | 'passports' | 'profile';
+  setRecyclerSubView: (view: 'radar' | 'browse' | 'scale' | 'payments' | 'bids' | 'pickups' | 'passports' | 'profile') => void;
   lots: Lot[];
   materials: Material[];
   pendingOffers: Offer[];
@@ -23,6 +26,7 @@ export interface RecyclerPortalProps {
   setHandoverLotId: (id: number) => void;
   setHandoverDialogOpen: (open: boolean) => void;
   openPassport: (lotId: number | string) => void;
+  collectors?: CollectorLocation[];
   onLogout?: () => void;
 }
 
@@ -43,8 +47,13 @@ export const RecyclerPortal: React.FC<RecyclerPortalProps> = ({
   setHandoverLotId,
   setHandoverDialogOpen,
   openPassport,
+  collectors,
   onLogout,
 }) => {
+  const [activeScaleLotId, setActiveScaleLotId] = useState<number>(102);
+  const [verifiedScaleWeight, setVerifiedScaleWeight] = useState<number>(5.4);
+  const [calculatedPayout, setCalculatedPayout] = useState<number>(2176.2);
+
   const handleSendOffer = (lotId: number, estimatedValue: number) => {
     setOfferLotId(lotId);
     setOfferPrice(String(estimatedValue));
@@ -72,41 +81,85 @@ export const RecyclerPortal: React.FC<RecyclerPortalProps> = ({
 
       {/* Recycler Top Metrics Grid */}
       <section className="stats-grid">
-        <div className="stat-card tint-green" onClick={() => setRecyclerSubView('browse')} style={{ cursor: 'pointer' }}>
-          <span className="stat-symbol">▣</span>
+        <div className="stat-card tint-green" onClick={() => setRecyclerSubView('radar')} style={{ cursor: 'pointer' }}>
+          <span className="stat-symbol">📍</span>
           <div>
-            <strong>{lots.length}</strong>
-            <span>Available Lots</span>
-            <small>Active in service area</small>
+            <strong>{(collectors || fallbackCollectors).length} Pickers</strong>
+            <span>Collector Radar</span>
+            <small>Nearby scrap depots</small>
           </div>
         </div>
-        <div className="stat-card tint-blue" onClick={() => setRecyclerSubView('bids')} style={{ cursor: 'pointer' }}>
-          <span className="stat-symbol">✓</span>
+        <div className="stat-card tint-blue" onClick={() => setRecyclerSubView('scale')} style={{ cursor: 'pointer' }}>
+          <span className="stat-symbol">⚖</span>
           <div>
-            <strong>{acceptedOffers.length}</strong>
-            <span>Accepted Bids</span>
-            <small>Awaiting collection</small>
+            <strong>Digital Scale</strong>
+            <span>Weigh-in Terminal</span>
+            <small>Tare & Net verification</small>
           </div>
         </div>
-        <div className="stat-card tint-yellow">
+        <div className="stat-card tint-yellow" onClick={() => setRecyclerSubView('payments')} style={{ cursor: 'pointer' }}>
           <span className="stat-symbol">₹</span>
           <div>
-            <strong>₹ {acceptedOffers.reduce((total, offer) => total + offer.offer_price, 0).toLocaleString('en-IN')}</strong>
-            <span>Committed Pipeline</span>
-            <small>Procurement turnover</small>
+            <strong>Instant Payout</strong>
+            <span>Payment Terminal</span>
+            <small>UPI / IMPS / Escrow</small>
           </div>
         </div>
         <div className="stat-card tint-purple" onClick={() => setRecyclerSubView('passports')} style={{ cursor: 'pointer' }}>
           <span className="stat-symbol">♻</span>
           <div>
-            <strong>{deliveredLots.length}</strong>
+            <strong>{deliveredLots.length} Passports</strong>
             <span>Completed Lots</span>
             <small>CPCB Passports Issued</small>
           </div>
         </div>
       </section>
 
+
       {/* Subpage View Switching */}
+      {recyclerSubView === 'radar' && (
+        <RecyclerCollectorRadar
+          currentUser={currentUser}
+          collectors={collectors || fallbackCollectors}
+          lots={lots}
+          onDispatchVehicle={(cId, lId) => {
+            alert(`✓ Zero-Emission EV pickup dispatched for Lot #${lId}. Driver Sunil Kumar notified.`);
+          }}
+          onOpenScaleTerminal={(lId) => {
+            setActiveScaleLotId(lId);
+            setRecyclerSubView('scale');
+          }}
+        />
+      )}
+
+      {recyclerSubView === 'scale' && (
+        <RecyclerScaleTerminal
+          lots={lots}
+          materials={materials}
+          onWeightVerified={(lId, weight, payout) => {
+            setActiveScaleLotId(lId);
+            setVerifiedScaleWeight(weight);
+            setCalculatedPayout(payout);
+            setRecyclerSubView('payments');
+          }}
+        />
+      )}
+
+      {recyclerSubView === 'payments' && (
+        <RecyclerPaymentTerminal
+          currentUser={currentUser}
+          lots={lots}
+          materials={materials}
+          selectedLotId={activeScaleLotId}
+          verifiedWeightKg={verifiedScaleWeight}
+          totalAmountInr={calculatedPayout}
+          onPaymentSettled={(lId, utr, passport) => {
+            // Settled
+          }}
+          openPassport={openPassport}
+        />
+      )}
+
       {recyclerSubView === 'browse' && (
         <RecyclerBrowseLots
           lots={lots}

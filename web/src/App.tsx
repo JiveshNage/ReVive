@@ -54,7 +54,6 @@ import { MobileProfileView } from './pages/mobile/MobileProfileView';
 
 import { RecyclerPortal } from './pages/recycler/RecyclerPortal';
 import { AdminPortal } from './pages/admin/AdminPortal';
-
 export function App() {
   // Domain data state
   const [materials, setMaterials] = useState<Material[]>(fallbackMaterials);
@@ -76,7 +75,7 @@ export function App() {
   // Admin & Governance state
   const [adminMetrics, setAdminMetrics] = useState<AdminMetrics | null>(null);
   const [adminAnomalies, setAdminAnomalies] = useState<AdminAnomaly[]>([]);
-  const [adminTab, setAdminTab] = useState<'kpis' | 'recyclers' | 'anomalies' | 'lots'>('kpis');
+  const [adminTab, setAdminTab] = useState<'kpis' | 'radar' | 'journey' | 'payments' | 'recyclers' | 'anomalies' | 'lots'>('kpis');
   const [verificationView, setVerificationView] = useState<'all' | 'pending'>('all');
   const [demoRunning, setDemoRunning] = useState(false);
   const [demoResult, setDemoResult] = useState<DemoWorkflowResult | null>(null);
@@ -84,7 +83,7 @@ export function App() {
   // App & Navigation state
   const [activeRole, setActiveRole] = useState<'collector' | 'recycler' | 'admin'>('collector');
   const [activePage, setActivePage] = useState<ActivePage>('home');
-  const [recyclerSubView, setRecyclerSubView] = useState<'browse' | 'bids' | 'pickups' | 'passports' | 'profile'>('browse');
+  const [recyclerSubView, setRecyclerSubView] = useState<'radar' | 'browse' | 'scale' | 'payments' | 'bids' | 'pickups' | 'passports' | 'profile'>('radar');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [apiStatus, setApiStatus] = useState<'online' | 'offline'>('offline');
@@ -395,7 +394,11 @@ export function App() {
         // Non-fatal
       }
 
-      setApiStatus(connected ? 'online' : 'offline');
+      if (connected) {
+        setApiStatus('online');
+        return;
+      }
+      setApiStatus('offline');
     } catch {
       setApiStatus('offline');
     }
@@ -494,7 +497,7 @@ export function App() {
         return;
       }
     } catch {
-      // Fall through to offline queue
+      // Fall through
     }
 
     queueOfflineMutation('lot', {
@@ -513,6 +516,7 @@ export function App() {
     photoUrl?: string;
   }) => {
     const colId = currentUser?.id || 1;
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/lots`, {
         method: 'POST',
@@ -533,6 +537,7 @@ export function App() {
     } catch {
       // Fallback
     }
+
     queueOfflineMutation('lot', {
       collector_id: colId,
       material_id: lotData.materialId,
@@ -544,6 +549,7 @@ export function App() {
   const submitOffer = async () => {
     const price = Number(offerPrice);
     if (!offerLotId || !offerRecyclerId || price <= 0) return;
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/offers`, {
         method: 'POST',
@@ -581,11 +587,16 @@ export function App() {
         method: 'POST',
         headers: getAuthHeaders(),
       });
-      if (response.ok) await refreshData();
+      if (response.ok) {
+        await refreshData();
+        return;
+      }
     } catch {
       // Fallback update
-      setOffers((prev) => prev.map((o) => (o.id === offerId ? { ...o, status: 'accepted' } : o)));
     }
+
+    setOffers((prev) => prev.map((o) => (o.id === offerId ? { ...o, status: 'accepted' } : o)));
+    await refreshData();
   };
 
   const confirmHandover = async () => {

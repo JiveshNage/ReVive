@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'theme/app_theme.dart';
 import 'models/lot.dart';
@@ -7,6 +8,7 @@ import 'models/recycler.dart';
 import 'widgets/app_header.dart';
 import 'widgets/bottom_nav_bar.dart';
 import 'widgets/qr_passport_dialog.dart';
+import 'widgets/audio_guide_dialog.dart';
 import 'screens/home_screen.dart';
 import 'screens/price_board_screen.dart';
 import 'screens/recyclers_screen.dart';
@@ -16,6 +18,7 @@ import 'screens/safety_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/scan_screen.dart';
 import 'screens/auth_screen.dart';
+import 'screens/lot_tracking_screen.dart';
 
 class ReViveApp extends StatelessWidget {
   const ReViveApp({super.key});
@@ -23,7 +26,7 @@ class ReViveApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ReVive Mobile',
+      title: 'ReVive Collector Mobile',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: const ReViveMainScreen(),
@@ -39,18 +42,40 @@ class ReViveMainScreen extends StatefulWidget {
 }
 
 class _ReViveMainScreenState extends State<ReViveMainScreen> {
-  // Navigation & Role State
+  // Navigation & Role State (First-time launch defaults to unauthenticated)
   int currentTabIndex = 0;
   String currentLang = 'hi'; // Default Hindi for grassroots collectors
-  bool isAuthenticated = true;
-  String activeRole = 'collector';
+  bool isAuthenticated = false; // Fresh launch requires Welcome / Login / Registration
   String userName = 'राम यादव (Ram Yadav)';
   String userPhone = '9876543210';
   String userId = 'REV-COL-2026-1024';
-  String userLocation = 'Bhopal, MP';
+  String userLocation = 'Karond Mandi, Bhopal, MP';
   bool isOnline = true;
 
-  // Domain Data State
+  @override
+  void initState() {
+    super.initState();
+    _checkPersistedAuth();
+  }
+
+  Future<void> _checkPersistedAuth() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedAuth = prefs.getBool('is_authenticated') ?? false;
+      if (savedAuth && mounted) {
+        setState(() {
+          isAuthenticated = true;
+          userName = prefs.getString('user_name') ?? userName;
+          userPhone = prefs.getString('user_phone') ?? userPhone;
+          userId = prefs.getString('user_id') ?? userId;
+          userLocation = prefs.getString('user_location') ?? userLocation;
+          currentLang = prefs.getString('user_lang') ?? currentLang;
+        });
+      }
+    } catch (_) {}
+  }
+
+  // Domain Data State with Geocoded telemetry
   final List<ScrapLot> lots = [
     ScrapLot(
       id: 101,
@@ -65,6 +90,13 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
       finalWeightKg: 14.2,
       passportId: 'REV-2026-LOT-0101',
       certificateHash: 'e48a6cf712bc90a8813ef046522c19318b76dfb2',
+      pickupAddress: 'Shop #4, Karond Mandi, Bhopal, MP 462038',
+      pickupLatitude: 23.2599,
+      pickupLongitude: 77.4126,
+      recyclerAddress: 'EcoCycle Processing Unit 3, Mandideep Industrial Area, MP',
+      recyclerLatitude: 23.0760,
+      recyclerLongitude: 77.5250,
+      currentTrackingStage: 'settled',
     ),
     ScrapLot(
       id: 102,
@@ -75,7 +107,20 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
       status: 'offers',
       syncStatus: 'SYNCED',
       createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-      recyclerName: 'CleanEarth Metal Recyclers',
+      recyclerName: 'CleanEarth Green Recyclers',
+      pickupAddress: 'Shop #4, Karond Mandi, Bhopal, MP 462038',
+      pickupLatitude: 23.2599,
+      pickupLongitude: 77.4126,
+      recyclerAddress: 'Bhopal Industrial Area Phase 2, MP',
+      recyclerLatitude: 23.0760,
+      recyclerLongitude: 77.5250,
+      driverName: 'Sunil Kumar (सुनील कुमार)',
+      driverPhone: '+91 98261 44521',
+      vehicleNumber: 'MP 04 GA 8821',
+      vehicleType: 'Tata Ace Electric (E-Cargo)',
+      currentTrackingStage: 'in_transit',
+      estimatedArrivalMinutes: 14,
+      remainingDistanceKm: 3.4,
     ),
     ScrapLot(
       id: 103,
@@ -86,6 +131,13 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
       status: 'created',
       syncStatus: 'SYNCED',
       createdAt: DateTime.now().subtract(const Duration(hours: 8)),
+      pickupAddress: 'Shop #4, Karond Mandi, Bhopal, MP 462038',
+      pickupLatitude: 23.2599,
+      pickupLongitude: 77.4126,
+      recyclerAddress: 'EcoCycle Mandideep Processing Depot, MP',
+      recyclerLatitude: 23.0760,
+      recyclerLongitude: 77.5250,
+      currentTrackingStage: 'catalogued',
     ),
   ];
 
@@ -145,11 +197,35 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
             });
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('✓ Lot #${newLot.id} created and sent to regional recyclers!'),
+                content: Text('✓ Lot #${newLot.id} catalogued! You can now send it to an authorized recycler.'),
                 backgroundColor: const Color(0xFF059669),
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  void _sendLotToRecycler(ScrapLot lot, AuthorizedRecycler recycler) {
+    setState(() {
+      lot.recyclerName = recycler.name;
+      lot.recyclerAddress = recycler.location;
+      lot.status = 'offers';
+      lot.currentTrackingStage = 'in_transit';
+      lot.estimatedArrivalMinutes = 14;
+      lot.remainingDistanceKm = 3.4;
+      currentTabIndex = 2; // Navigate to Lots screen
+    });
+  }
+
+  void _openLiveTracking(ScrapLot lot) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => LotTrackingScreen(
+          lot: lot,
+          currentLang: currentLang,
+          onConfirmHandover: _confirmHandover,
         ),
       ),
     );
@@ -168,23 +244,37 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
       lot.finalWeightKg = verifiedWeight;
       lot.passportId = 'REV-2026-LOT-0${lot.id}';
       lot.certificateHash = 'e48a6cf712bc90a8813ef046522c19318b76dfb2';
+      lot.currentTrackingStage = 'settled';
     });
     _openPassportDialog(lot);
   }
 
-  void _handleLoginSuccess(String role, String name, String phone) {
+  void _handleLoginSuccess(String role, String name, String phone) async {
     setState(() {
-      activeRole = role;
       userName = name;
       userPhone = phone;
-      userId = role == 'collector'
-          ? 'REV-COL-2026-1024'
-          : role == 'recycler'
-              ? 'REV-REC-2026-0812'
-              : 'CPCB-GOV-2026-0001';
-      userLocation = role == 'recycler' ? 'Pune, Maharashtra' : 'Bhopal, MP';
+      userId = 'REV-COL-2026-1024';
+      userLocation = 'Karond Mandi, Bhopal, MP';
       isAuthenticated = true;
     });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_authenticated', true);
+      await prefs.setString('user_name', name);
+      await prefs.setString('user_phone', phone);
+      await prefs.setString('user_id', userId);
+      await prefs.setString('user_location', userLocation);
+      await prefs.setString('user_lang', currentLang);
+    } catch (_) {}
+  }
+
+  void _handleLogout() async {
+    setState(() => isAuthenticated = false);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('is_authenticated');
+    } catch (_) {}
   }
 
   @override
@@ -202,7 +292,7 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 1. REUSABLE TOP APP HEADER
+            // 1. REUSABLE TOP APP HEADER WITH WORKING AUDIO GUIDE
             AppHeader(
               currentLang: currentLang,
               onSelectLang: (code) => setState(() => currentLang = code),
@@ -213,7 +303,7 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('Digital Identity Card')),
+                      appBar: AppBar(title: const Text('Collector Identity Card')),
                       body: ProfileScreen(
                         currentLang: currentLang,
                         onSelectLang: (code) => setState(() => currentLang = code),
@@ -221,24 +311,37 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
                         userId: userId,
                         location: userLocation,
                         phone: userPhone,
-                        onLogout: () => setState(() => isAuthenticated = false),
+                        onOpenSafety: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => Scaffold(
+                                appBar: AppBar(title: const Text('Field Safety Guidance')),
+                                body: SafetyScreen(
+                                  currentLang: currentLang,
+                                  onOpenScanner: _openLiveScanner,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        onLogout: _handleLogout,
                       ),
                     ),
                   ),
                 );
               },
               onSpeak: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      currentLang == 'hi'
-                          ? 'ऑडियो सहायक: कबाड़ की फोटो खींचें और सही नकद भाव पाएं।'
-                          : currentLang == 'mr'
-                              ? 'ऑडिओ सहाय्यक: ई-कचऱ्याचा फोटो काढा आणि अचूक रोख भाव मिळवा.'
-                              : 'Audio Assistant: Scan scrap e-waste to receive verified fair price.',
-                    ),
-                    duration: const Duration(seconds: 3),
-                  ),
+                AudioGuideDialog.show(
+                  context,
+                  currentLang: currentLang,
+                  initialSection: currentTabIndex == 1
+                      ? 'home'
+                      : currentTabIndex == 2
+                          ? 'recyclers'
+                          : currentTabIndex == 3
+                              ? 'handover'
+                              : 'home',
+                  onSelectLang: (code) => setState(() => currentLang = code),
                 );
               },
             ),
@@ -256,15 +359,18 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
                     onOpenScanner: _openLiveScanner,
                     onNavigatePrices: () => setState(() => currentTabIndex = 1),
                     onNavigateLots: () => setState(() => currentTabIndex = 2),
+                    onOpenTracking: _openLiveTracking,
                     onNavigateRecyclers: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => Scaffold(
-                            appBar: AppBar(title: const Text('Recyclers Directory')),
+                            appBar: AppBar(title: const Text('Authorized Recyclers')),
                             body: RecyclersScreen(
                               currentLang: currentLang,
                               recyclers: recyclers,
+                              lots: lots,
                               onOpenScanner: _openLiveScanner,
+                              onSendLotToRecycler: _sendLotToRecycler,
                             ),
                           ),
                         ),
@@ -297,9 +403,11 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
                   LotsScreen(
                     currentLang: currentLang,
                     lots: lots,
+                    recyclers: recyclers,
                     onOpenScanner: _openLiveScanner,
                     onOpenPassport: _openPassportDialog,
                     onConfirmHandover: _confirmHandover,
+                    onSendLotToRecycler: _sendLotToRecycler,
                   ),
 
                   // Tab 3: Earnings & Financial Ledger

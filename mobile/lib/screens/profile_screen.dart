@@ -8,6 +8,7 @@ class ProfileScreen extends StatelessWidget {
   final String userId;
   final String location;
   final String phone;
+  final VoidCallback? onOpenSafety;
   final VoidCallback onLogout;
 
   const ProfileScreen({
@@ -18,6 +19,7 @@ class ProfileScreen extends StatelessWidget {
     required this.userId,
     required this.location,
     required this.phone,
+    this.onOpenSafety,
     required this.onLogout,
   });
 
@@ -180,6 +182,16 @@ class ProfileScreen extends StatelessWidget {
                     onSelectLang(nextLang);
                   },
                 ),
+                if (onOpenSafety != null) ...[
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.health_and_safety_rounded, color: Color(0xFF059669)),
+                    title: const Text('Field Safety & Hazard Guide', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Toxicity prevention, battery handling & safe storage', style: TextStyle(fontSize: 12)),
+                    trailing: const Icon(Icons.chevron_right, size: 20),
+                    onTap: onOpenSafety,
+                  ),
+                ],
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.logout_rounded, color: AppColors.accentRed),
@@ -189,6 +201,23 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 20),
+          const Center(
+            child: Column(
+              children: [
+                Text(
+                  'ReVive Collector App · v1.0.3',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'CPCB Informal Partner Network',
+                  style: TextStyle(fontSize: 10.5, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
         ],
       ),
     );

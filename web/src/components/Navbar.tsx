@@ -8,10 +8,10 @@ export interface NavbarProps {
   setActiveRole: (role: 'collector' | 'recycler' | 'admin') => void;
   activePage: ActivePage;
   setActivePage: (page: ActivePage) => void;
-  recyclerSubView: 'browse' | 'bids' | 'pickups' | 'passports' | 'profile';
-  setRecyclerSubView: (view: 'browse' | 'bids' | 'pickups' | 'passports' | 'profile') => void;
-  adminTab: 'kpis' | 'recyclers' | 'anomalies' | 'lots';
-  setAdminTab: (tab: 'kpis' | 'recyclers' | 'anomalies' | 'lots') => void;
+  recyclerSubView: 'radar' | 'browse' | 'scale' | 'payments' | 'bids' | 'pickups' | 'passports' | 'profile';
+  setRecyclerSubView: (view: 'radar' | 'browse' | 'scale' | 'payments' | 'bids' | 'pickups' | 'passports' | 'profile') => void;
+  adminTab: 'kpis' | 'radar' | 'journey' | 'payments' | 'recyclers' | 'anomalies' | 'lots';
+  setAdminTab: (tab: 'kpis' | 'radar' | 'journey' | 'payments' | 'recyclers' | 'anomalies' | 'lots') => void;
   currentUser: UserProfile | null;
   apiStatus: 'online' | 'offline';
   audioPlaying: boolean;
@@ -336,6 +336,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             <>
               <button
                 type="button"
+                className={`nav-tab-item ${recyclerSubView === 'radar' ? 'active' : ''}`}
+                onClick={() => {
+                  setRecyclerSubView('radar');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="tab-icon">📍</span>
+                <span>Collector Radar</span>
+              </button>
+
+              <button
+                type="button"
                 className={`nav-tab-item ${recyclerSubView === 'browse' ? 'active' : ''}`}
                 onClick={() => {
                   setRecyclerSubView('browse');
@@ -343,7 +355,31 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
               >
                 <span className="tab-icon">🔍</span>
-                <span>Browse Scrap Lots</span>
+                <span>Browse Lots</span>
+              </button>
+
+              <button
+                type="button"
+                className={`nav-tab-item ${recyclerSubView === 'scale' ? 'active' : ''}`}
+                onClick={() => {
+                  setRecyclerSubView('scale');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="tab-icon">⚖️</span>
+                <span>Digital Scale</span>
+              </button>
+
+              <button
+                type="button"
+                className={`nav-tab-item ${recyclerSubView === 'payments' ? 'active' : ''}`}
+                onClick={() => {
+                  setRecyclerSubView('payments');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="tab-icon">💳</span>
+                <span>Payment Release</span>
               </button>
 
               <button
@@ -368,7 +404,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
               >
                 <span className="tab-icon">🚚</span>
-                <span>Pickups & Weigh-in</span>
+                <span>Pickups</span>
                 {acceptedOffersCount > 0 && (
                   <span className="tab-badge success">{acceptedOffersCount}</span>
                 )}
@@ -412,7 +448,43 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
               >
                 <span className="tab-icon">📊</span>
-                <span>National E-Waste KPIs</span>
+                <span>National KPIs</span>
+              </button>
+
+              <button
+                type="button"
+                className={`nav-tab-item ${adminTab === 'radar' ? 'active' : ''}`}
+                onClick={() => {
+                  setAdminTab('radar');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="tab-icon">📍</span>
+                <span>Collector Live Radar</span>
+              </button>
+
+              <button
+                type="button"
+                className={`nav-tab-item ${adminTab === 'journey' ? 'active' : ''}`}
+                onClick={() => {
+                  setAdminTab('journey');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="tab-icon">🚚</span>
+                <span>Handover Journey</span>
+              </button>
+
+              <button
+                type="button"
+                className={`nav-tab-item ${adminTab === 'payments' ? 'active' : ''}`}
+                onClick={() => {
+                  setAdminTab('payments');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="tab-icon">💳</span>
+                <span>Payment Tracking</span>
               </button>
 
               <button
@@ -451,7 +523,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
               >
                 <span className="tab-icon">📋</span>
-                <span>Traceability Master Ledger</span>
+                <span>Master Ledger</span>
               </button>
             </>
           )}

@@ -15,6 +15,7 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback onNavigateRecyclers;
   final VoidCallback onNavigateSafety;
   final Function(ScrapLot) onOpenPassport;
+  final Function(ScrapLot)? onOpenTracking;
 
   const HomeScreen({
     super.key,
@@ -27,6 +28,7 @@ class HomeScreen extends StatelessWidget {
     required this.onNavigateRecyclers,
     required this.onNavigateSafety,
     required this.onOpenPassport,
+    this.onOpenTracking,
   });
 
   @override
@@ -36,12 +38,18 @@ class HomeScreen extends StatelessWidget {
         .fold(0.0, (sum, l) => sum + l.estimatedValue);
     final double totalKg = lots.fold(0.0, (sum, l) => sum + l.quantityKg);
 
+    // Find if there is an active lot in transit or with offers
+    final activeLot = lots.cast<ScrapLot?>().firstWhere(
+          (l) => l != null && (l.status == 'offers' || l.status == 'pickup'),
+          orElse: () => null,
+        );
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. HERO CAMERA SCANNER CARD (matching web portal hero camera card)
+          // 1. HERO CAMERA SCANNER CARD
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -82,7 +90,7 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Text('📸 Live Camera', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                    const Text('📸 Working Camera', style: TextStyle(color: Colors.white70, fontSize: 11)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -127,16 +135,138 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
 
-          // 2. QUICK ACTION CHIPS
+          // 2. LIVE ACTIVE LOT PICKUP TRACKING CARD (IF ANY LOT IS IN TRANSIT)
+          if (activeLot != null) ...[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.cyanAccent.withAlpha(100)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(38),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'LIVE PICKUP EN ROUTE',
+                            style: TextStyle(
+                              color: Colors.cyanAccent,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(25),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'LOT #${activeLot.id}',
+                          style: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.cyanAccent.withAlpha(38),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.electric_rickshaw_rounded, color: Colors.cyanAccent, size: 28),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              activeLot.material,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Driver ${activeLot.driverName} • ${activeLot.vehicleNumber}',
+                              style: const TextStyle(color: Colors.white70, fontSize: 11.5),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'ETA: ~${activeLot.estimatedArrivalMinutes} mins • ${activeLot.remainingDistanceKm} km away',
+                              style: const TextStyle(color: Color(0xFF67E8F9), fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => onOpenTracking?.call(activeLot),
+                      icon: const Icon(Icons.location_searching_rounded, size: 16),
+                      label: const Text('Open Live Route Tracking Map'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0284C7),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // 3. QUICK ACTION CHIPS
           Row(
             children: [
               Expanded(
                 child: _quickActionButton(
                   icon: '📈',
                   title: 'Price Board',
-                  subtitle: 'Live MSP Rates',
+                  subtitle: 'Live Mandi MSP',
                   onTap: onNavigatePrices,
                 ),
               ),
@@ -145,7 +275,7 @@ class HomeScreen extends StatelessWidget {
                 child: _quickActionButton(
                   icon: '🏭',
                   title: 'Recyclers',
-                  subtitle: 'Nearby CPCB Units',
+                  subtitle: 'CPCB Units',
                   onTap: onNavigateRecyclers,
                 ),
               ),
@@ -154,7 +284,7 @@ class HomeScreen extends StatelessWidget {
                 child: _quickActionButton(
                   icon: '🛡️',
                   title: 'Safety',
-                  subtitle: 'Safe Handling',
+                  subtitle: 'Field Guide',
                   onTap: onNavigateSafety,
                 ),
               ),
@@ -163,7 +293,7 @@ class HomeScreen extends StatelessWidget {
 
           const SizedBox(height: 18),
 
-          // 3. KEY STATS GRID (Matching Web Portal)
+          // 4. KEY STATS GRID
           Row(
             children: [
               Expanded(
@@ -190,7 +320,7 @@ class HomeScreen extends StatelessWidget {
 
           const SizedBox(height: 18),
 
-          // 4. LIVE RATE TICKER PREVIEW
+          // 5. LIVE RATE TICKER PREVIEW
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -263,7 +393,7 @@ class HomeScreen extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // 5. RECENT LOTS LIST
+          // 6. RECENT LOTS LIST
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -363,6 +493,11 @@ class HomeScreen extends StatelessWidget {
                 GestureDetector(
                   onTap: () => onOpenPassport(lot),
                   child: const Text('Passport 📜', style: TextStyle(fontSize: 11, color: AppColors.accentBlue, fontWeight: FontWeight.bold)),
+                )
+              else if (lot.status == 'offers' || lot.status == 'pickup')
+                GestureDetector(
+                  onTap: () => onOpenTracking?.call(lot),
+                  child: const Text('Live Track 🚛', style: TextStyle(fontSize: 11, color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
                 ),
             ],
           ),
