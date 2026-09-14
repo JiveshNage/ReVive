@@ -910,7 +910,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <header className="landing-navbar">
         <div className="landing-nav-container">
           <div className="landing-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="landing-brand-badge">R</div>
+            <img
+              src="/revive-logo-en.jpeg"
+              alt="ReVive Logo"
+              className="landing-brand-logo"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/Logo english.jpeg';
+              }}
+            />
             <div>
               <span className="landing-brand-title">ReVive</span>
               <span className="landing-brand-sub">{t.brandTag}</span>
@@ -1741,9 +1748,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <img
-                src="/revive-logo.jpeg"
-                alt="ReVive"
-                style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+                src="/revive-logo-en.jpeg"
+                alt="ReVive Logo"
+                style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/Logo english.jpeg';
+                }}
               />
               <strong style={{ color: '#0c3b2d' }}>ReVive Circular Economy Exchange</strong>
             </div>

@@ -2286,8 +2286,20 @@ h3 {
   transition: transform 0.2s ease;
 }
 
-.landing-brand:hover .landing-brand-badge {
-  transform: scale(1.05);
+.landing-brand-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: 0 3px 10px rgba(6, 78, 59, 0.22);
+  flex-shrink: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.landing-brand:hover .landing-brand-badge,
+.landing-brand:hover .landing-brand-logo {
+  transform: scale(1.06);
+  box-shadow: 0 5px 14px rgba(6, 78, 59, 0.3);
 }
 
 .landing-brand-title {
