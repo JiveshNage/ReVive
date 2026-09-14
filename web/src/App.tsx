@@ -84,10 +84,9 @@ export function App() {
   const [activeRole, setActiveRole] = useState<'collector' | 'recycler' | 'admin'>('collector');
   const [activePage, setActivePage] = useState<ActivePage>('home');
   const [recyclerSubView, setRecyclerSubView] = useState<'radar' | 'browse' | 'scale' | 'payments' | 'bids' | 'pickups' | 'passports' | 'profile'>('radar');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [apiStatus, setApiStatus] = useState<'online' | 'offline'>('offline');
   const [audioPlaying, setAudioPlaying] = useState(false);
+  const [actionSubmitting, setActionSubmitting] = useState(false);
 
   // User & Auth state
   const [currentLang, setCurrentLang] = useState<Lang>('hi');
@@ -470,12 +469,14 @@ export function App() {
     if (apiStatus === 'online') void syncQueuedItems();
   }, [apiStatus]);
 
-  // Actions
+  // Actions with duplicate submission prevention
   const createLot = async () => {
+    if (actionSubmitting) return;
     const quantity = Number(newLotQuantity);
     if (!newLotMaterialId || quantity <= 0) return;
     const colId = currentUser?.id || 1;
 
+    setActionSubmitting(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/lots`, {
         method: 'POST',
@@ -498,6 +499,8 @@ export function App() {
       }
     } catch {
       // Fall through
+    } finally {
+      setActionSubmitting(false);
     }
 
     queueOfflineMutation('lot', {
@@ -515,8 +518,10 @@ export function App() {
     estimatedValue: number;
     photoUrl?: string;
   }) => {
+    if (actionSubmitting) return;
     const colId = currentUser?.id || 1;
 
+    setActionSubmitting(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/lots`, {
         method: 'POST',
@@ -536,6 +541,8 @@ export function App() {
       }
     } catch {
       // Fallback
+    } finally {
+      setActionSubmitting(false);
     }
 
     queueOfflineMutation('lot', {
@@ -547,9 +554,11 @@ export function App() {
   };
 
   const submitOffer = async () => {
+    if (actionSubmitting) return;
     const price = Number(offerPrice);
     if (!offerLotId || !offerRecyclerId || price <= 0) return;
 
+    setActionSubmitting(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/offers`, {
         method: 'POST',
@@ -569,6 +578,8 @@ export function App() {
       }
     } catch {
       // Fall through
+    } finally {
+      setActionSubmitting(false);
     }
 
     queueOfflineMutation('offer', {
@@ -582,6 +593,8 @@ export function App() {
   };
 
   const acceptOffer = async (offerId: number) => {
+    if (actionSubmitting) return;
+    setActionSubmitting(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}/accept`, {
         method: 'POST',
@@ -593,6 +606,8 @@ export function App() {
       }
     } catch {
       // Fallback update
+    } finally {
+      setActionSubmitting(false);
     }
 
     setOffers((prev) => prev.map((o) => (o.id === offerId ? { ...o, status: 'accepted' } : o)));
@@ -600,6 +615,7 @@ export function App() {
   };
 
   const confirmHandover = async () => {
+    if (actionSubmitting) return;
     const plannedWeight = Number(handoverFinalWeight);
     if (!handoverLotId || !handoverLocation || plannedWeight <= 0) return;
 
@@ -614,6 +630,7 @@ export function App() {
       signature: `SIG-REV-${handoverLotId}-${Date.now().toString(36).toUpperCase()}`,
     };
 
+    setActionSubmitting(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/handover`, {
         method: 'POST',
@@ -632,6 +649,8 @@ export function App() {
       }
     } catch {
       // Fall through
+    } finally {
+      setActionSubmitting(false);
     }
 
     queueOfflineMutation('handover', payload);
@@ -641,6 +660,8 @@ export function App() {
   };
 
   const completePayment = async (lotId: number) => {
+    if (actionSubmitting) return;
+    setActionSubmitting(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/lots/${lotId}/payment`, {
         method: 'POST',
@@ -649,6 +670,8 @@ export function App() {
       if (response.ok) await refreshData();
     } catch {
       setLots((prev) => prev.map((l) => (l.id === lotId ? { ...l, status: 'payment_completed' } : l)));
+    } finally {
+      setActionSubmitting(false);
     }
   };
 

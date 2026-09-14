@@ -19,12 +19,14 @@ class User(Base):
     service_area = Column(String(150), nullable=True)
     custom_user_id = Column(String(50), unique=True, index=True, nullable=True)
     hashed_password = Column(String(255), nullable=True)
+    verification_status = Column(String(40), nullable=False, default="NOT_SUBMITTED")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
     lots = relationship("Lot", back_populates="collector", cascade="all, delete-orphan")
     login_audits = relationship("LoginAudit", back_populates="user", cascade="all, delete-orphan")
+    organization_documents = relationship("OrganizationDocument", foreign_keys="OrganizationDocument.organization_id", back_populates="organization", cascade="all, delete-orphan")
 
 
 class LoginAudit(Base):
@@ -126,3 +128,67 @@ class ResolvedAnomaly(Base):
     resolved_by = Column(String(100), nullable=True)
     notes = Column(String(255), nullable=True)
     resolved_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class DocumentType(Base):
+    __tablename__ = "document_types"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(50), unique=True, index=True, nullable=False)
+    name = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    required = Column(Boolean, default=True, nullable=False)
+    active = Column(Boolean, default=True, nullable=False)
+    applicable_to = Column(String(100), default="recycler,enterprise", nullable=False)
+    validity_required = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    documents = relationship("OrganizationDocument", back_populates="document_type", cascade="all, delete-orphan")
+
+
+class OrganizationDocument(Base):
+    __tablename__ = "organization_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    document_type_id = Column(Integer, ForeignKey("document_types.id", ondelete="RESTRICT"), nullable=False, index=True)
+    document_number = Column(String(100), nullable=True)
+    file_path = Column(String(255), nullable=False)
+    file_name = Column(String(255), nullable=False)
+    original_filename = Column(String(255), nullable=False)
+    file_type = Column(String(100), nullable=False)
+    file_size = Column(Integer, nullable=False, default=0)
+    issued_date = Column(String(30), nullable=True)
+    expiry_date = Column(String(30), nullable=True)
+    status = Column(String(30), nullable=False, default="PENDING")  # DRAFT, PENDING, APPROVED, REJECTED, EXPIRED
+    rejection_reason = Column(Text, nullable=True)
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    reviewed_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    version = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    organization = relationship("User", foreign_keys=[organization_id], back_populates="organization_documents")
+    reviewer = relationship("User", foreign_keys=[reviewed_by])
+    document_type = relationship("DocumentType", back_populates="documents")
+    audit_logs = relationship("DocumentAuditLog", back_populates="document", cascade="all, delete-orphan")
+
+
+class DocumentAuditLog(Base):
+    __tablename__ = "document_audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_id = Column(Integer, ForeignKey("organization_documents.id", ondelete="SET NULL"), nullable=True, index=True)
+    organization_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    actor_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    action = Column(String(50), nullable=False)  # SUBMITTED, APPROVED, REJECTED, REPLACED, EXPIRED, STATUS_UPDATED
+    details = Column(Text, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    document = relationship("OrganizationDocument", back_populates="audit_logs")
+    organization = relationship("User", foreign_keys=[organization_id])
+    actor = relationship("User", foreign_keys=[actor_id])
+

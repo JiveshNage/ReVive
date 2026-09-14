@@ -185,6 +185,79 @@ export type UserProfile = {
   company_name?: string | null;
   license_no?: string | null;
   service_area?: string | null;
+  verification_status?: string | null;
+};
+
+export type DocumentType = {
+  id: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  required: boolean;
+  active: boolean;
+  applicable_to: string;
+  validity_required: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type OrganizationDocument = {
+  id: number;
+  organization_id: number;
+  organization_name?: string | null;
+  document_type_id: number;
+  document_type_code?: string | null;
+  document_type_name?: string | null;
+  document_number?: string | null;
+  file_name: string;
+  original_filename: string;
+  file_type: string;
+  file_size: number;
+  issued_date?: string | null;
+  expiry_date?: string | null;
+  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
+  rejection_reason?: string | null;
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
+  reviewed_by?: number | null;
+  reviewer_name?: string | null;
+  version: number;
+  is_expiring_soon: boolean;
+  is_expired: boolean;
+  download_url?: string | null;
+};
+
+export type DocumentAuditLog = {
+  id: number;
+  document_id?: number | null;
+  organization_id: number;
+  actor_id?: number | null;
+  actor_name?: string | null;
+  action: string;
+  details?: string | null;
+  rejection_reason?: string | null;
+  created_at?: string | null;
+};
+
+export type VerificationSummary = {
+  verification_status:
+    | 'NOT_SUBMITTED'
+    | 'DOCUMENTS_PENDING'
+    | 'UNDER_REVIEW'
+    | 'PARTIALLY_VERIFIED'
+    | 'VERIFIED'
+    | 'REJECTED'
+    | 'EXPIRED';
+  total_required: number;
+  total_uploaded: number;
+  total_approved: number;
+  total_pending: number;
+  total_rejected: number;
+  total_expired: number;
+  expiring_within_30_days: number;
+  can_transact: boolean;
+  message: string;
+  documents: OrganizationDocument[];
 };
 
 export const API_BASE_URL: string =

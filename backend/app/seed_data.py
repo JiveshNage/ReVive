@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.models import Material, Recycler, User
+from app.models import DocumentType, Material, Recycler, User
 
 
 def seed_data(db: Session):
@@ -13,9 +13,12 @@ def seed_data(db: Session):
 
     recycler = db.query(User).filter(User.phone == "9123456780").first()
     if not recycler:
-        db.add(User(name="Raj Recycler", phone="9123456780", role="recycler", language="en", location="Pune, Maharashtra", company_name="EcoCycle Pune Authorized Facility", license_no="CPCB/EW/2024/0981", service_area="Maharashtra & Central India", email="recycler@revive-ewaste.gov.in", custom_user_id="REV-REC-2026-0812"))
-    elif not recycler.custom_user_id:
-        recycler.custom_user_id = "REV-REC-2026-0812"
+        db.add(User(name="Raj Recycler", phone="9123456780", role="recycler", language="en", location="Pune, Maharashtra", company_name="EcoCycle Pune Authorized Facility", license_no="CPCB/EW/2024/0981", service_area="Maharashtra & Central India", email="recycler@revive-ewaste.gov.in", custom_user_id="REV-REC-2026-0812", verification_status="VERIFIED"))
+    else:
+        if not recycler.custom_user_id:
+            recycler.custom_user_id = "REV-REC-2026-0812"
+        if not recycler.verification_status:
+            recycler.verification_status = "VERIFIED"
 
     admin = db.query(User).filter(User.phone == "9998887770").first()
     if not admin:
@@ -37,4 +40,64 @@ def seed_data(db: Session):
             Recycler(name="GreenLoop Nashik", verified=True, location="Nashik, Maharashtra", contact_phone="9876540002"),
         ])
 
+    # Seed Configurable Document Types if none exist
+    if db.query(DocumentType).count() == 0:
+        db.add_all([
+            DocumentType(
+                code="cpcb_auth",
+                name="CPCB Extended Producer Responsibility Authorization",
+                description="Statutory authorization certificate issued under CPCB E-Waste Management Rules.",
+                required=True,
+                active=True,
+                applicable_to="recycler,enterprise",
+                validity_required=True,
+            ),
+            DocumentType(
+                code="spcb_consent",
+                name="State Pollution Control Board Consent to Operate (CTO)",
+                description="Valid SPCB Consent to Operate under Water and Air Acts for recycling operations.",
+                required=True,
+                active=True,
+                applicable_to="recycler",
+                validity_required=True,
+            ),
+            DocumentType(
+                code="gst_cert",
+                name="Goods and Services Tax (GST) Certificate",
+                description="Valid GSTIN registration certificate for the legal business entity.",
+                required=True,
+                active=True,
+                applicable_to="recycler,enterprise",
+                validity_required=False,
+            ),
+            DocumentType(
+                code="company_reg",
+                name="Enterprise / Incorporation Registration",
+                description="Certificate of Incorporation, Udyam MSME certificate, or Partnership registration.",
+                required=True,
+                active=True,
+                applicable_to="recycler,enterprise",
+                validity_required=False,
+            ),
+            DocumentType(
+                code="pan_card",
+                name="Organization PAN Card",
+                description="Permanent Account Number card of the enterprise or registered entity.",
+                required=True,
+                active=True,
+                applicable_to="recycler,enterprise",
+                validity_required=False,
+            ),
+            DocumentType(
+                code="iso_cert",
+                name="ISO 14001 / R2 Recycling Compliance Certification",
+                description="Optional standard certification for environmental management systems.",
+                required=False,
+                active=True,
+                applicable_to="recycler",
+                validity_required=True,
+            ),
+        ])
+
     db.commit()
+

@@ -260,6 +260,7 @@ class UserProfileOut(BaseModel):
     company_name: str | None = None
     license_no: str | None = None
     service_area: str | None = None
+    verification_status: str = "NOT_SUBMITTED"
 
 
 class TokenResponse(BaseModel):
@@ -318,3 +319,91 @@ class LoginAuditOut(BaseModel):
     login_type: str
     status: str
     created_at: str | None = None
+
+
+class DocumentTypeOut(BaseModel):
+    id: int
+    code: str
+    name: str
+    description: str | None = None
+    required: bool = True
+    active: bool = True
+    applicable_to: str = "recycler,enterprise"
+    validity_required: bool = True
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class DocumentTypeCreate(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50)
+    name: str = Field(..., min_length=2, max_length=150)
+    description: str | None = None
+    required: bool = True
+    active: bool = True
+    applicable_to: str = "recycler,enterprise"
+    validity_required: bool = True
+
+
+class OrganizationDocumentOut(BaseModel):
+    id: int
+    organization_id: int
+    organization_name: str | None = None
+    document_type_id: int
+    document_type_code: str | None = None
+    document_type_name: str | None = None
+    document_number: str | None = None
+    file_name: str
+    original_filename: str
+    file_type: str
+    file_size: int
+    issued_date: str | None = None
+    expiry_date: str | None = None
+    status: str
+    rejection_reason: str | None = None
+    submitted_at: str | None = None
+    reviewed_at: str | None = None
+    reviewed_by: int | None = None
+    reviewer_name: str | None = None
+    version: int = 1
+    is_expiring_soon: bool = False
+    is_expired: bool = False
+    download_url: str | None = None
+
+
+class DocumentReviewRequest(BaseModel):
+    status: str = Field(..., pattern="^(APPROVED|REJECTED)$")
+    rejection_reason: str | None = None
+
+    @model_validator(mode="after")
+    def validate_rejection_reason(self):
+        if self.status == "REJECTED":
+            if not self.rejection_reason or not self.rejection_reason.strip():
+                raise ValueError("A clear rejection reason is mandatory when rejecting a document.")
+        return self
+
+
+class DocumentAuditLogOut(BaseModel):
+    id: int
+    document_id: int | None = None
+    organization_id: int
+    actor_id: int | None = None
+    actor_name: str | None = None
+    action: str
+    details: str | None = None
+    rejection_reason: str | None = None
+    created_at: str | None = None
+
+
+class VerificationSummaryOut(BaseModel):
+    verification_status: str
+    total_required: int
+    total_uploaded: int
+    total_approved: int
+    total_pending: int
+    total_rejected: int
+    total_expired: int
+    expiring_within_30_days: int
+    can_transact: bool
+    message: str
+    documents: list[OrganizationDocumentOut] = []
+

@@ -39,6 +39,12 @@ def create_lot(
     current_user: User | None = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
 ):
+    if payload.quantity_kg <= 0 or payload.quantity_kg > 50000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Quantity must be greater than 0 kg and within realistic limits (<= 50,000 kg).",
+        )
+
     material = db.get(Material, payload.material_id)
     if not material:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Material not found")
@@ -71,10 +77,17 @@ def create_lot(
 
 
 @router.get("/lots", response_model=list[LotOut])
-def list_lots(collector_id: int | None = None, db: Session = Depends(get_db)):
+def list_lots(
+    collector_id: int | None = None,
+    current_user: User | None = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+):
     stmt = select(Lot)
     if collector_id is not None:
         stmt = stmt.where(Lot.collector_id == collector_id)
+    elif current_user and current_user.role == "collector":
+        # Collector automatically views their own catalog of lots
+        stmt = stmt.where(Lot.collector_id == current_user.id)
     lots = db.execute(stmt).scalars().all()
     return lots
 
@@ -116,12 +129,37 @@ def get_lot_handover(lot_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/lots/{lot_id}/payment", response_model=LotOut)
-def mark_lot_payment_complete(lot_id: int, db: Session = Depends(get_db)):
+def mark_lot_payment_complete(
+    lot_id: int,
+    current_user: User | None = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+):
     lot = db.get(Lot, lot_id)
     if not lot:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lot not found")
 
+    if lot.status == "payment_completed":
+        # Idempotent response if already marked completed
+        return lot
+
+    # Handover verification: prevent skipping handover process
+    handover = db.execute(select(Handover).where(Handover.lot_id == lot_id)).scalar_one_or_none()
+    if not handover and lot.status not in ("handed_over", "pickup"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot complete payment before physical handover verification.",
+        )
+
+    # Verify actor authorization
+    if current_user and current_user.role not in ("recycler", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only authorized recyclers or administrators can finalize payment settlement.",
+        )
+
     lot.status = "payment_completed"
+    if handover and handover.status != "confirmed":
+        handover.status = "confirmed"
     db.commit()
     db.refresh(lot)
     return lot

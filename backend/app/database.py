@@ -57,6 +57,7 @@ def ensure_db_initialized() -> None:
                     ("service_area", "VARCHAR(150)"),
                     ("custom_user_id", "VARCHAR(50)"),
                     ("hashed_password", "VARCHAR(255)"),
+                    ("verification_status", "VARCHAR(40) DEFAULT 'NOT_SUBMITTED'"),
                 ]
                 for col_name, col_type in cols_to_add:
                     if col_name not in existing_cols:

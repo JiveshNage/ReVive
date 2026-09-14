@@ -10,7 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import settings
 from app.database import SessionLocal, ensure_db_initialized
-from app.routers import admin, ai, auth, handovers, lots, materials, offers
+from app.routers import admin, ai, auth, documents, handovers, lots, materials, offers
 from app.seed_data import seed_data
 
 logger = logging.getLogger("revive")
@@ -65,6 +65,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Security Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(self), camera=(self), microphone=()"
+    return response
 
 
 # Exception Handlers
@@ -125,6 +137,7 @@ app.include_router(materials.router)
 app.include_router(lots.router)
 app.include_router(offers.router)
 app.include_router(handovers.router)
+app.include_router(documents.router)
 app.include_router(admin.router)
 app.include_router(ai.router)
 

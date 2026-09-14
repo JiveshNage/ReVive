@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.auth import (
     create_access_token,
     get_current_user,
+    get_optional_current_user,
     hash_password,
     verify_password,
 )
@@ -33,9 +34,30 @@ logger = logging.getLogger("revive.auth")
 router = APIRouter(prefix=f"{settings.api_v1_prefix}/auth", tags=["Auth"])
 
 # In-memory OTP store with expiration timestamp: {identifier: (otp_code, expiry_time)}
-# Can easily be swapped with Redis in production
 OTP_STORE: dict[str, tuple[str, datetime]] = {}
 OTP_VALIDITY_MINUTES = 5
+
+# In-memory rate limiting store: {identifier: [timestamp1, timestamp2, ...]}
+RATE_LIMIT_STORE: dict[str, list[datetime]] = {}
+RATE_LIMIT_MAX_ATTEMPTS = 5
+RATE_LIMIT_WINDOW_SECONDS = 60
+
+
+def check_rate_limit(
+    identifier: str,
+    max_attempts: int = RATE_LIMIT_MAX_ATTEMPTS,
+    window_seconds: int = RATE_LIMIT_WINDOW_SECONDS,
+):
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(seconds=window_seconds)
+    timestamps = [ts for ts in RATE_LIMIT_STORE.get(identifier, []) if ts > cutoff]
+    if len(timestamps) >= max_attempts:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many requests for '{identifier}'. Please wait before trying again.",
+        )
+    timestamps.append(now)
+    RATE_LIMIT_STORE[identifier] = timestamps
 
 
 def generate_custom_user_id(role: str, user_id: int) -> str:
@@ -78,6 +100,7 @@ def build_user_profile_out(user: User) -> UserProfileOut:
         company_name=getattr(user, "company_name", None),
         license_no=getattr(user, "license_no", None),
         service_area=getattr(user, "service_area", None),
+        verification_status=getattr(user, "verification_status", "NOT_SUBMITTED") or "NOT_SUBMITTED",
         is_active=getattr(user, "is_active", True),
         created_at=user.created_at.isoformat() if getattr(user, "created_at", None) else None,
     )
@@ -218,6 +241,7 @@ def send_otp(payload: OtpSendRequest):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Please provide a valid 10-digit mobile number or email address.",
         )
+    check_rate_limit(f"send_otp:{identifier}")
     is_email = "@" in identifier
 
     # Generate OTP (deterministic "123456" for dev/testing, random 6-digit for production)
@@ -262,6 +286,8 @@ def verify_otp(payload: OtpVerifyRequest, db: Session = Depends(get_db)):
     identifier = (payload.phone or payload.email or "").strip()
     if not identifier:
         identifier = "9876543210"
+
+    check_rate_limit(f"verify_otp:{identifier}", max_attempts=8, window_seconds=60)
 
     is_email = "@" in identifier
     is_dev = settings.app_env.lower() in ("development", "dev", "test")
@@ -347,15 +373,28 @@ def verify_otp(payload: OtpVerifyRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/profile", response_model=UserProfileOut)
-def setup_or_update_profile(payload: ProfileCreateRequest, db: Session = Depends(get_db)):
+def setup_or_update_profile(
+    payload: ProfileCreateRequest,
+    current_user: User | None = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+):
     clean_phone = payload.phone.strip()
     digits = re.sub(r"\D", "", clean_phone)
     if len(digits) == 12 and digits.startswith("91"):
         digits = digits[2:]
 
-    user = db.execute(select(User).where(User.phone == digits)).scalars().first()
-    if not user and payload.email:
-        user = db.execute(select(User).where(User.email == payload.email)).scalars().first()
+    if current_user:
+        user = current_user
+    else:
+        user = db.execute(select(User).where(User.phone == digits)).scalars().first()
+        if not user and payload.email:
+            user = db.execute(select(User).where(User.email == payload.email)).scalars().first()
+        if user and user.hashed_password and not (user.name and user.name.startswith("Registered ")):
+            # Prevent unauthenticated tampering of fully established user profile
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required to modify existing user profile.",
+            )
 
     hashed_pwd = hash_password(payload.password) if payload.password else None
 

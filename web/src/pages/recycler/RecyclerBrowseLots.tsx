@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Lot, Material } from '../../types';
+import { Lot, Material, UserProfile } from '../../types';
 
 export interface RecyclerBrowseLotsProps {
   lots: Lot[];
   materials: Material[];
   getStatusLabel: (status: string) => string;
   onSendOffer: (lotId: number, estimatedValue: number) => void;
+  currentUser?: UserProfile | null;
+  onNavigateProfile?: () => void;
 }
 
 export const RecyclerBrowseLots: React.FC<RecyclerBrowseLotsProps> = ({
@@ -13,9 +15,16 @@ export const RecyclerBrowseLots: React.FC<RecyclerBrowseLotsProps> = ({
   materials,
   getStatusLabel,
   onSendOffer,
+  currentUser,
+  onNavigateProfile,
 }) => {
   const [selectedMaterialFilter, setSelectedMaterialFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const isVerified =
+    !currentUser ||
+    currentUser.role !== 'recycler' ||
+    currentUser.verification_status === 'VERIFIED';
 
   const filteredLots = lots.filter((lot) => {
     const mat = materials.find((m) => m.id === lot.material_id);
@@ -32,7 +41,57 @@ export const RecyclerBrowseLots: React.FC<RecyclerBrowseLotsProps> = ({
   });
 
   return (
-    <div className="recycler-subpage-container">
+    <div className="recycler-subpage-container" style={{ width: '100%' }}>
+      {/* Verification Warning Banner if Unverified */}
+      {!isVerified && (
+        <div
+          style={{
+            background: '#fff7ed',
+            border: '1px solid #fed7aa',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '24px' }}>🛡️</span>
+            <div>
+              <strong style={{ color: '#9a3412', fontSize: '14px', display: 'block' }}>
+                CPCB Compliance Verification Required for Bidding
+              </strong>
+              <span style={{ color: '#c2410c', fontSize: '13px' }}>
+                Your organization is currently marked as{' '}
+                <strong>{currentUser?.verification_status || 'NOT_SUBMITTED'}</strong>. Submit your statutory CPCB,
+                SPCB and enterprise certificates to place binding offers.
+              </span>
+            </div>
+          </div>
+          {onNavigateProfile && (
+            <button
+              type="button"
+              onClick={onNavigateProfile}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                background: '#ea580c',
+                color: '#fff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              Verify Organization ➔
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="subpage-header-row">
         <div>
           <h2>📦 Available E-Waste Lots</h2>
@@ -114,10 +173,29 @@ export const RecyclerBrowseLots: React.FC<RecyclerBrowseLotsProps> = ({
                   <button
                     type="button"
                     className="bid-action-btn"
-                    disabled={isClosed}
-                    onClick={() => onSendOffer(lot.id, lot.estimated_value)}
+                    disabled={isClosed || !isVerified}
+                    title={
+                      !isVerified
+                        ? 'Complete organization verification before submitting scrap offers'
+                        : undefined
+                    }
+                    onClick={() => {
+                      if (!isVerified) {
+                        if (onNavigateProfile) onNavigateProfile();
+                        return;
+                      }
+                      onSendOffer(lot.id, lot.estimated_value);
+                    }}
+                    style={{
+                      opacity: !isVerified ? 0.6 : 1,
+                      cursor: !isVerified ? 'not-allowed' : 'pointer',
+                    }}
                   >
-                    {isClosed ? 'Lot Handed Over' : '🏷️ Place Bid / Send Offer'}
+                    {isClosed
+                      ? 'Lot Handed Over'
+                      : !isVerified
+                      ? '🔒 Verification Required to Bid'
+                      : '🏷️ Place Bid / Send Offer'}
                   </button>
                 </div>
               </div>

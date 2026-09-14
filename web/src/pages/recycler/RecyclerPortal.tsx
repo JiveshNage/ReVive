@@ -166,6 +166,8 @@ export const RecyclerPortal: React.FC<RecyclerPortalProps> = ({
           materials={materials}
           getStatusLabel={getStatusLabel}
           onSendOffer={handleSendOffer}
+          currentUser={currentUser}
+          onNavigateProfile={() => setRecyclerSubView('profile')}
         />
       )}
 

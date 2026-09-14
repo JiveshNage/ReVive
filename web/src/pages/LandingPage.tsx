@@ -864,26 +864,53 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <div className="landing-shell">
       {/* --------------------------------------------------------------------------
+          0. TOP ANNOUNCEMENT BAR (MoEFCC CPCB Statutory Partner & Language Picker)
+          -------------------------------------------------------------------------- */}
+      <div className="landing-top-bar">
+        <div className="landing-top-bar-inner">
+          <div className="landing-top-bar-text">
+            <span className="live-pulse-dot" />
+            <span>
+              {currentLang === 'hi'
+                ? 'SIH 2024 · MoEFCC CPCB वैधानिक भागीदार'
+                : currentLang === 'mr'
+                ? 'SIH 2024 · MoEFCC CPCB वैधानिक भागीदार'
+                : 'SIH 2024 · MoEFCC CPCB Statutory Partner'}
+            </span>
+          </div>
+          <div className="landing-top-bar-lang">
+            <button
+              type="button"
+              className={currentLang === 'hi' ? 'active' : ''}
+              onClick={() => onSelectLang('hi')}
+            >
+              हिं
+            </button>
+            <button
+              type="button"
+              className={currentLang === 'en' ? 'active' : ''}
+              onClick={() => onSelectLang('en')}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              className={currentLang === 'mr' ? 'active' : ''}
+              onClick={() => onSelectLang('mr')}
+            >
+              मराठी
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* --------------------------------------------------------------------------
           1. PUBLIC LANDING NAVBAR
           -------------------------------------------------------------------------- */}
       <header className="landing-navbar">
         <div className="landing-nav-container">
           <div className="landing-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img
-              src={currentLang === 'hi' ? '/revive-logo-hi.jpeg' : '/revive-logo.jpeg'}
-              alt="ReVive"
-              className="landing-brand-logo"
-              style={{
-                width: '44px',
-                height: '44px',
-                objectFit: 'contain',
-                borderRadius: '10px',
-                background: '#ffffff',
-                padding: '2px',
-                flexShrink: 0,
-                border: '1px solid #d1fae5',
-              }}
-            />
+            <div className="landing-brand-badge">R</div>
             <div>
               <span className="landing-brand-title">ReVive</span>
               <span className="landing-brand-sub">{t.brandTag}</span>
@@ -909,8 +936,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </nav>
 
           <div className="landing-nav-actions">
-            <span className="sih-gov-badge">{t.sihBadge}</span>
-
             {/* Audio Vernacular TTS Reader */}
             <button
               type="button"
@@ -986,68 +1011,98 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </header>
 
       {/* --------------------------------------------------------------------------
-          2. HERO SECTION
+          2. HERO SECTION (2-COLUMN RESPONSIVE LAYOUT)
           -------------------------------------------------------------------------- */}
       <main className="landing-container">
         <section className="landing-hero">
-          <div className="hero-pill-badge">
-            <span>🌱</span>
-            <span>{t.heroPill}</span>
+          <div className="landing-hero-left">
+            <div className="hero-pill-badge">
+              <span className="badge-dot">•</span>
+              <span>{t.heroPill}</span>
+            </div>
+
+            <h1 className="landing-hero-title">
+              {t.heroTitle1}
+              <span className="hero-title-gradient">{t.heroTitleHighlight}</span>
+            </h1>
+
+            <p className="landing-hero-sub">{t.heroSub}</p>
+
+            <div className="landing-hero-ctas">
+              <button
+                type="button"
+                className="hero-btn-primary"
+                onClick={() => onOpenAuth('collector', 'signup', 'language_choice')}
+              >
+                {t.btnCollector} →
+              </button>
+              <button
+                type="button"
+                className="hero-btn-secondary"
+                onClick={() => onOpenAuth('recycler', 'signup', 'profile_setup')}
+              >
+                {t.btnRecycler}
+              </button>
+              <button
+                type="button"
+                className="hero-btn-text"
+                onClick={() => onOpenAuth('admin', 'login', 'phone_input')}
+              >
+                {t.btnAdmin}
+              </button>
+            </div>
+
+            {/* Dynamic Impact Counters */}
+            <div className="impact-counter-grid">
+              <div className="impact-counter-card">
+                <div className="impact-counter-val">{t.statDiverted}</div>
+                <div className="impact-counter-lbl">{t.statDivertedLbl}</div>
+              </div>
+              <div className="impact-counter-card">
+                <div className="impact-counter-val">{t.statCo2}</div>
+                <div className="impact-counter-lbl">{t.statCo2Lbl}</div>
+              </div>
+              <div className="impact-counter-card">
+                <div className="impact-counter-val">{t.statMsp}</div>
+                <div className="impact-counter-lbl">{t.statMspLbl}</div>
+              </div>
+              <div className="impact-counter-card">
+                <div className="impact-counter-val">{t.statFormalized}</div>
+                <div className="impact-counter-lbl">{t.statFormalizedLbl}</div>
+              </div>
+              <div className="impact-counter-card">
+                <div className="impact-counter-val">{t.statVerification}</div>
+                <div className="impact-counter-lbl">{t.statVerificationLbl}</div>
+              </div>
+            </div>
           </div>
 
-          <h1 className="landing-hero-title">
-            {t.heroTitle1}
-            <span style={{ color: '#059669' }}>{t.heroTitleHighlight}</span>
-          </h1>
-
-          <p className="landing-hero-sub">{t.heroSub}</p>
-
-          <div className="landing-hero-ctas">
-            <button
-              type="button"
-              className="hero-btn-primary"
-              style={{ background: '#086c4b', color: '#ffffff' }}
-              onClick={() => onOpenAuth('collector', 'signup', 'language_choice')}
-            >
-              {t.btnCollector}
-            </button>
-            <button
-              type="button"
-              className="hero-btn-secondary"
-              onClick={() => onOpenAuth('recycler', 'signup', 'profile_setup')}
-            >
-              {t.btnRecycler}
-            </button>
-            <button
-              type="button"
-              className="hero-btn-secondary"
-              onClick={() => onOpenAuth('admin', 'login', 'phone_input')}
-            >
-              {t.btnAdmin}
-            </button>
-          </div>
-
-          {/* Dynamic Impact Counters */}
-          <div className="impact-counter-grid">
-            <div className="impact-counter-card">
-              <div className="impact-counter-val">{t.statDiverted}</div>
-              <div className="impact-counter-lbl">{t.statDivertedLbl}</div>
-            </div>
-            <div className="impact-counter-card">
-              <div className="impact-counter-val">{t.statCo2}</div>
-              <div className="impact-counter-lbl">{t.statCo2Lbl}</div>
-            </div>
-            <div className="impact-counter-card">
-              <div className="impact-counter-val">{t.statMsp}</div>
-              <div className="impact-counter-lbl">{t.statMspLbl}</div>
-            </div>
-            <div className="impact-counter-card">
-              <div className="impact-counter-val">{t.statFormalized}</div>
-              <div className="impact-counter-lbl">{t.statFormalizedLbl}</div>
-            </div>
-            <div className="impact-counter-card">
-              <div className="impact-counter-val">{t.statVerification}</div>
-              <div className="impact-counter-lbl">{t.statVerificationLbl}</div>
+          <div className="landing-hero-right">
+            <div className="hero-image-card">
+              <img
+                src="/hero-ewaste-collector.jpg"
+                alt="E-Waste Inspection"
+                className="hero-image-main"
+              />
+              <div className="hero-floating-passport-badge">
+                <div className="passport-check-icon">✓</div>
+                <div>
+                  <strong>
+                    {currentLang === 'hi'
+                      ? 'हर सामग्री का डिजिटल पासपोर्ट'
+                      : currentLang === 'mr'
+                      ? 'प्रत्येक साहित्याचा डिजिटल पासपोर्ट'
+                      : 'Digital Passport for Every Lot'}
+                  </strong>
+                  <small>
+                    {currentLang === 'hi'
+                      ? 'संग्रह से प्रमाणित स्मेल्टर तक पूरी ट्रेसेबिलिटी'
+                      : currentLang === 'mr'
+                      ? 'संकलनापासून प्रमाणित स्मेल्टरपर्यंत संपूर्ण पारदर्शकता'
+                      : 'End-to-end traceability from pickup to certified smelter'}
+                  </small>
+                </div>
+              </div>
             </div>
           </div>
         </section>

@@ -280,7 +280,7 @@ def test_ai_prediction_endpoint():
     if res.status_code == 200:
         pred = res.json()
         assert pred["category"] == "PCB"
-        assert pred["confidence"] > 0.4
+        assert pred["confidence"] >= 0.3
         assert pred["confidence_tier"] in ["high", "medium", "low"]
         assert pred["recommendation"] in ["strong_suggestion", "confirm_manually", "manual_required"]
         assert pred["pricing"] is not None

@@ -8,6 +8,7 @@ from app.ai_service import (
     predict_image,
 )
 from app.config import settings
+from app.file_security import validate_image_upload
 from app.schemas import (
     BenchmarkCategoryRate,
     PredictionOut,
@@ -138,15 +139,19 @@ SAFETY_KNOWLEDGE_BASE = [
     ),
 ]
 
-
 @router.post("/ai/predict", response_model=PredictionOut)
 async def predict_material(
     file: UploadFile = File(...),
     location: str = "Bhopal",
     weight_kg: float = 1.0,
 ):
+    contents = await file.read()
+    is_valid, err_msg, _ = validate_image_upload(contents, file.content_type)
+    if not is_valid:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err_msg)
+
     try:
-        return predict_image(await file.read(), file.content_type, location, weight_kg)
+        return predict_image(contents, file.content_type, location, weight_kg)
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
     except AIServiceUnavailable as error:

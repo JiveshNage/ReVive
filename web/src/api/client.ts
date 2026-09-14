@@ -72,3 +72,72 @@ export const apiPost = <T>(endpoint: string, body?: unknown, options?: RequestIn
     method: 'POST',
     body: body instanceof FormData ? body : JSON.stringify(body),
   });
+
+export const apiPut = <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
+  apiRequest<T>(endpoint, {
+    ...options,
+    method: 'PUT',
+    body: body instanceof FormData ? body : JSON.stringify(body),
+  });
+
+export const apiDelete = <T>(endpoint: string, options?: RequestInit) =>
+  apiRequest<T>(endpoint, { ...options, method: 'DELETE' });
+
+// ============================================================================
+// Document Verification API Client Methods
+// ============================================================================
+import type {
+  DocumentAuditLog,
+  DocumentType,
+  OrganizationDocument,
+  VerificationSummary,
+} from '../types';
+
+export async function getDocumentTypes(): Promise<DocumentType[]> {
+  return apiGet<DocumentType[]>('/api/documents/types');
+}
+
+export async function getMyDocuments(): Promise<VerificationSummary> {
+  return apiGet<VerificationSummary>('/api/documents/my');
+}
+
+export async function uploadDocument(formData: FormData): Promise<OrganizationDocument> {
+  return apiPost<OrganizationDocument>('/api/documents/upload', formData);
+}
+
+export async function replaceDocument(
+  documentId: number,
+  formData: FormData
+): Promise<OrganizationDocument> {
+  return apiPut<OrganizationDocument>(`/api/documents/${documentId}`, formData);
+}
+
+export function getDocumentFileUrl(documentId: number): string {
+  return `${API_BASE_URL}/api/documents/${documentId}/file`;
+}
+
+export async function adminGetDocuments(
+  statusFilter?: string,
+  orgId?: number
+): Promise<OrganizationDocument[]> {
+  const params = new URLSearchParams();
+  if (statusFilter && statusFilter !== 'ALL') params.set('status_filter', statusFilter);
+  if (orgId) params.set('org_id', String(orgId));
+  const qs = params.toString();
+  return apiGet<OrganizationDocument[]>(`/api/admin/documents${qs ? `?${qs}` : ''}`);
+}
+
+export async function adminReviewDocument(
+  documentId: number,
+  payload: { status: 'APPROVED' | 'REJECTED'; rejection_reason?: string }
+): Promise<OrganizationDocument> {
+  return apiPost<OrganizationDocument>(`/api/admin/documents/${documentId}/review`, payload);
+}
+
+export async function adminGetDocumentAuditLogs(
+  orgId?: number
+): Promise<DocumentAuditLog[]> {
+  const qs = orgId ? `?org_id=${orgId}` : '';
+  return apiGet<DocumentAuditLog[]>(`/api/admin/document-audit-logs${qs}`);
+}
+
