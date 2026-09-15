@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'services/api_client.dart';
 import 'theme/app_theme.dart';
 import 'models/lot.dart';
 import 'models/price_benchmark.dart';
@@ -71,6 +72,7 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
           userLocation = prefs.getString('user_location') ?? userLocation;
           currentLang = prefs.getString('user_lang') ?? currentLang;
         });
+        _loadRemoteData();
       }
     } catch (_) {}
   }
@@ -190,7 +192,7 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
       MaterialPageRoute(
         builder: (ctx) => ScanScreen(
           currentLang: currentLang,
-          onLotCreated: (newLot) {
+          onLotCreated: (newLot) async {
             setState(() {
               lots.insert(0, newLot);
               currentTabIndex = 2; // Switch to lots tab
@@ -201,6 +203,18 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
                 backgroundColor: const Color(0xFF059669),
               ),
             );
+            try {
+              final res = await ApiClient().createLot(
+                materialId: 1,
+                quantityKg: newLot.quantityKg,
+                photoUrl: newLot.imagePath,
+              );
+              if (res['lot_reference'] != null && mounted) {
+                setState(() {
+                  newLot.passportId = res['lot_reference'];
+                });
+              }
+            } catch (_) {}
           },
         ),
       ),
@@ -238,42 +252,132 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
     );
   }
 
-  void _confirmHandover(ScrapLot lot, double verifiedWeight) {
+  void _confirmHandover(ScrapLot lot, double verifiedWeight) async {
     setState(() {
       lot.status = 'paid';
       lot.finalWeightKg = verifiedWeight;
-      lot.passportId = 'REV-2026-LOT-0${lot.id}';
+      lot.passportId = lot.passportId ?? 'REV-2026-LOT-0${lot.id}';
       lot.certificateHash = 'e48a6cf712bc90a8813ef046522c19318b76dfb2';
       lot.currentTrackingStage = 'settled';
     });
+    try {
+      final res = await ApiClient().createHandover(
+        lotId: lot.id,
+        collectorId: 1,
+        recyclerId: 1,
+        finalWeightKg: verifiedWeight,
+        handoverLocation: lot.pickupAddress,
+        latitude: lot.pickupLatitude,
+        longitude: lot.pickupLongitude,
+      );
+      if (res['handover_reference'] != null && mounted) {
+        setState(() {
+          lot.certificateHash = res['handover_reference'];
+        });
+      }
+    } catch (_) {}
     _openPassportDialog(lot);
   }
 
-  void _handleLoginSuccess(String role, String name, String phone) async {
+  Future<void> _loadRemoteData() async {
+    try {
+      final remoteLots = await ApiClient().getLots();
+      if (remoteLots.isNotEmpty && mounted) {
+        final parsed = remoteLots
+            .map((j) => ScrapLot.fromBackendJson(j as Map<String, dynamic>))
+            .toList();
+        setState(() {
+          lots.clear();
+          lots.addAll(parsed);
+        });
+      }
+    } catch (_) {}
+
+    try {
+      final remotePrices = await ApiClient().getPriceBenchmarks();
+      if (remotePrices.isNotEmpty && mounted) {
+        final parsed = remotePrices.map((j) {
+          final m = j as Map<String, dynamic>;
+          return PriceBenchmark(
+            category: m['category'] as String? ?? 'General',
+            medianRate: (m['median_rate'] as num?)?.toDouble() ?? 300.0,
+            minRate: (m['min_rate'] as num?)?.toDouble() ?? 250.0,
+            maxRate: (m['max_rate'] as num?)?.toDouble() ?? 350.0,
+            trend: m['trend'] as String? ?? '+0.0%',
+          );
+        }).toList();
+        setState(() {
+          benchmarks.clear();
+          benchmarks.addAll(parsed);
+        });
+      }
+    } catch (_) {}
+
+    try {
+      final remoteRecyclers = await ApiClient().matchRecyclers(location: userLocation);
+      if (remoteRecyclers.isNotEmpty && mounted) {
+        final parsed = remoteRecyclers.map((j) {
+          final m = j as Map<String, dynamic>;
+          final id = m['recycler_id'] as int? ?? 1;
+          return AuthorizedRecycler(
+            id: id,
+            name: m['recycler_name'] as String? ?? 'Recycler #$id',
+            licenseNo: 'CPCB/EW/2026/$id',
+            location: m['location'] as String? ?? 'India',
+            rating: 4.8,
+            verified: (m['authorization_status'] as String? ?? '').toLowerCase().contains('auth'),
+            acceptedMaterials: m['accepted_materials'] as String? ?? 'All E-Waste',
+            offerRate: 420.0,
+            phone: m['contact'] as String? ?? '+91 9800000000',
+          );
+        }).toList();
+        setState(() {
+          recyclers.clear();
+          recyclers.addAll(parsed);
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _handleLoginSuccess(
+    String role,
+    String name,
+    String phone, {
+    String? customUserId,
+    String? location,
+    String? token,
+  }) async {
+    final effectiveUserId = customUserId ?? 'REV-COL-2026-1024';
+    final effectiveLocation = location ?? 'Karond Mandi, Bhopal, MP';
+
     setState(() {
       userName = name;
       userPhone = phone;
-      userId = 'REV-COL-2026-1024';
-      userLocation = 'Karond Mandi, Bhopal, MP';
+      userId = effectiveUserId;
+      userLocation = effectiveLocation;
       isAuthenticated = true;
     });
 
     try {
+      if (token != null) {
+        await ApiClient().saveToken(token);
+      }
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_authenticated', true);
       await prefs.setString('user_name', name);
       await prefs.setString('user_phone', phone);
-      await prefs.setString('user_id', userId);
-      await prefs.setString('user_location', userLocation);
+      await prefs.setString('user_id', effectiveUserId);
+      await prefs.setString('user_location', effectiveLocation);
       await prefs.setString('user_lang', currentLang);
     } catch (_) {}
+
+    _loadRemoteData();
   }
 
   void _handleLogout() async {
     setState(() => isAuthenticated = false);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('is_authenticated');
+      await ApiClient().clearAuth();
     } catch (_) {}
   }
 

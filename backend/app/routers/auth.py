@@ -40,7 +40,7 @@ OTP_VALIDITY_MINUTES = 5
 # In-memory rate limiting store: {identifier: [timestamp1, timestamp2, ...]}
 RATE_LIMIT_STORE: dict[str, list[datetime]] = {}
 RATE_LIMIT_MAX_ATTEMPTS = 5
-RATE_LIMIT_WINDOW_SECONDS = 60
+RATE_LIMIT_WINDOW_SECONDS = 600
 
 
 def check_rate_limit(
@@ -109,6 +109,7 @@ def build_user_profile_out(user: User) -> UserProfileOut:
 @router.post("/signup", response_model=TokenResponse)
 def signup_user(payload: UserSignupRequest, db: Session = Depends(get_db)):
     clean_phone = payload.phone.strip()
+    check_rate_limit(f"signup:{clean_phone}")
     existing_phone = db.execute(select(User).where(User.phone == clean_phone)).scalars().first()
     if existing_phone:
         raise HTTPException(
@@ -127,6 +128,31 @@ def signup_user(payload: UserSignupRequest, db: Session = Depends(get_db)):
 
     hashed_pwd = hash_password(payload.password) if payload.password else None
 
+    # If recycler, resolve or create corresponding Recycler record
+    recycler_row_id = None
+    if payload.role == "recycler":
+        from app.models import Recycler
+        existing_rec = db.execute(
+            select(Recycler).where(
+                (Recycler.contact_phone == clean_phone)
+                | (Recycler.name == (payload.company_name or payload.name))
+            )
+        ).scalars().first()
+        if existing_rec:
+            recycler_row_id = existing_rec.id
+        else:
+            new_rec = Recycler(
+                name=payload.company_name or payload.name,
+                verified=False,
+                location=payload.location or "India",
+                contact_phone=clean_phone,
+                service_area=payload.service_area or payload.location or "India",
+            )
+            db.add(new_rec)
+            db.commit()
+            db.refresh(new_rec)
+            recycler_row_id = new_rec.id
+
     new_user = User(
         name=payload.name.strip(),
         phone=clean_phone,
@@ -138,6 +164,7 @@ def signup_user(payload: UserSignupRequest, db: Session = Depends(get_db)):
         license_no=payload.license_no,
         service_area=payload.service_area,
         hashed_password=hashed_pwd,
+        recycler_id=recycler_row_id,
     )
     db.add(new_user)
     db.commit()
@@ -169,6 +196,7 @@ def signup_user(payload: UserSignupRequest, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 def login_with_password(payload: UserLoginRequest, db: Session = Depends(get_db)):
     identifier = payload.phone_or_email.strip()
+    check_rate_limit(f"login:{identifier}")
 
     if "@" in identifier:
         user = db.execute(select(User).where(User.email == identifier)).scalars().first()

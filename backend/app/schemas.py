@@ -24,6 +24,7 @@ class LotOut(BaseModel):
     quantity_kg: float
     estimated_value: float
     status: str
+    lot_reference: str | None = None
 
 
 class OfferCreate(BaseModel):
@@ -51,6 +52,9 @@ class HandoverCreate(BaseModel):
     collector_confirmed: bool = False
     recycler_confirmed: bool = False
     signature: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    photo_url: str | None = None
 
 
 class HandoverOut(BaseModel):
@@ -64,6 +68,11 @@ class HandoverOut(BaseModel):
     recycler_confirmed: bool
     signature: str | None = None
     status: str
+    latitude: float | None = None
+    longitude: float | None = None
+    photo_url: str | None = None
+    handover_reference: str | None = None
+    discrepancy_flagged: bool = False
 
 
 class RecyclerOut(BaseModel):

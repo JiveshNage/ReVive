@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai_service import estimate_price
-from app.auth import get_optional_current_user
+from app.auth import get_optional_current_user, require_role
 from app.config import settings
 from app.database import get_db
 from app.models import DocumentAuditLog, DocumentType, Handover, Lot, Material, Offer, OrganizationDocument, Recycler, ResolvedAnomaly, User
@@ -23,20 +23,12 @@ from app.schemas import (
 router = APIRouter(prefix=settings.api_v1_prefix, tags=["Admin & Governance"])
 
 
-def enforce_admin_access(current_user: User | None):
+def enforce_admin_access(current_user: User):
     """Enforces that only administrators can access admin governance endpoints."""
-    is_dev = settings.app_env.lower() in ("development", "dev", "test")
-    if current_user:
-        if current_user.role != "admin":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access forbidden: requires CPCB Admin privileges.",
-            )
-    elif not is_dev:
+    if not current_user or current_user.role != "admin":
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required for administrative endpoints.",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: requires CPCB Admin privileges.",
         )
 
 
@@ -121,10 +113,9 @@ def compute_admin_anomalies(db: Session) -> list[AdminAnomalyOut]:
 
 @router.get("/admin/metrics", response_model=AdminMetricsOut)
 def get_admin_metrics(
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
-    enforce_admin_access(current_user)
     lots = db.execute(select(Lot)).scalars().all()
     total_lots = len(lots)
     active_lots = len([l for l in lots if l.status in ["created", "offers", "pickup"]])
@@ -164,20 +155,18 @@ def get_admin_metrics(
 
 @router.get("/admin/anomalies", response_model=list[AdminAnomalyOut])
 def get_admin_anomalies(
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
-    enforce_admin_access(current_user)
     return compute_admin_anomalies(db)
 
 
 @router.post("/admin/anomalies/{anomaly_id}/resolve")
 def resolve_admin_anomaly(
     anomaly_id: str,
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
-    enforce_admin_access(current_user)
     existing = db.get(ResolvedAnomaly, anomaly_id)
     if not existing:
         resolved = ResolvedAnomaly(id=anomaly_id, notes="Anomaly acknowledged and resolved")
@@ -190,10 +179,9 @@ def resolve_admin_anomaly(
 def verify_recycler(
     recycler_id: int,
     payload: RecyclerVerificationUpdate,
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
-    enforce_admin_access(current_user)
     recycler = db.get(Recycler, recycler_id)
     if not recycler:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recycler not found")
@@ -214,11 +202,10 @@ def verify_recycler(
 def list_admin_documents(
     status_filter: str | None = None,
     org_id: int | None = None,
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
     """Lists submitted organization documents for admin review and compliance verification."""
-    enforce_admin_access(current_user)
     from app.routers.documents import build_document_out
 
     query = select(OrganizationDocument).order_by(OrganizationDocument.id.desc())
@@ -235,7 +222,7 @@ def list_admin_documents(
 def review_organization_document(
     document_id: int,
     payload: DocumentReviewRequest,
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
     """
@@ -243,7 +230,6 @@ def review_organization_document(
     When rejecting, a clear rejection reason is strictly required.
     Triggers recalculation of the organization's verification status and audit logging.
     """
-    enforce_admin_access(current_user)
     from app.routers.documents import build_document_out, recalculate_organization_status
 
     doc = db.get(OrganizationDocument, document_id)
@@ -278,19 +264,21 @@ def review_organization_document(
     db.commit()
 
     # Recalculate organization's verification status
-    recalculate_organization_status(doc.organization, db)
+    org_user = doc.organization or db.get(User, doc.organization_id)
+    if org_user:
+        recalculate_organization_status(org_user, db)
     db.refresh(doc)
     return build_document_out(doc)
 
 
 @router.get("/admin/document-audit-logs", response_model=list[DocumentAuditLogOut])
-def list_admin_document_audit_logs(
+@router.get("/admin/documents/audit-logs", response_model=list[DocumentAuditLogOut])
+def get_document_audit_logs(
     org_id: int | None = None,
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
     """Lists compliance audit trail events for administrators."""
-    enforce_admin_access(current_user)
 
     query = select(DocumentAuditLog).order_by(DocumentAuditLog.id.desc()).limit(200)
     if org_id:

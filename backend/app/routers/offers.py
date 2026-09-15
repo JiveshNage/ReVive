@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from app.auth import get_optional_current_user
+from app.auth import get_current_user, require_role
 from app.config import settings
 from app.database import get_db
+from app.dependencies import verify_owner_or_admin
 from app.models import Lot, Offer, Recycler, User
 from app.schemas import OfferCreate, OfferOut
 
@@ -14,7 +15,7 @@ router = APIRouter(prefix=settings.api_v1_prefix, tags=["Offers"])
 @router.post("/offers")
 def create_offer(
     payload: OfferCreate,
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(require_role("recycler", "admin")),
     db: Session = Depends(get_db),
 ):
     if payload.offer_price <= 0:
@@ -33,25 +34,39 @@ def create_offer(
             detail="Cannot place an offer on a lot that is already handed over or settled.",
         )
 
-    recycler = db.get(Recycler, payload.recycler_id)
+    # If role is recycler, force recycler_id to resolve to authenticated recycler's own row
+    if current_user.role == "recycler":
+        recycler_id = current_user.recycler_id
+        if not recycler_id:
+            # Fallback lookup by phone or name
+            matched_rec = db.execute(
+                select(Recycler).where(
+                    (Recycler.contact_phone == current_user.phone)
+                    | (Recycler.name == (current_user.company_name or current_user.name))
+                )
+            ).scalars().first()
+            if matched_rec:
+                recycler_id = matched_rec.id
+                current_user.recycler_id = recycler_id
+                db.commit()
+            else:
+                recycler_id = payload.recycler_id
+    else:
+        # Admin can submit on behalf of any specified recycler
+        recycler_id = payload.recycler_id
+
+    recycler = db.get(Recycler, recycler_id)
     if not recycler:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recycler not found")
 
-    # If authenticated, verify caller has permission (recycler or admin)
-    if current_user and current_user.role not in ("recycler", "admin"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only recyclers or administrators can submit scrap bids/offers.",
-        )
-
     # Verify recycler verification compliance
-    if current_user and current_user.role == "recycler":
+    if current_user.role == "recycler":
         if current_user.verification_status != "VERIFIED" and not recycler.verified:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Organization certificate verification required before submitting scrap offers. Please complete CPCB & regulatory document verification in your Organization Profile.",
             )
-    elif not recycler.verified and (not current_user or current_user.role != "admin"):
+    elif not recycler.verified and current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Recycler organization is not verified. Valid CPCB authorization required before placing offers.",
@@ -59,7 +74,7 @@ def create_offer(
 
     offer = Offer(
         lot_id=payload.lot_id,
-        recycler_id=payload.recycler_id,
+        recycler_id=recycler_id,
         offer_price=payload.offer_price,
         pickup_available=payload.pickup_available,
         status="pending",
@@ -68,8 +83,14 @@ def create_offer(
     if lot.status == "created":
         lot.status = "offers"
     db.commit()
-    db.refresh(offer)
-    return {"id": offer.id, "lot_id": offer.lot_id, "offer_price": offer.offer_price, "status": offer.status}
+    return {
+        "id": offer.id,
+        "lot_id": offer.lot_id,
+        "recycler_id": offer.recycler_id,
+        "offer_price": offer.offer_price,
+        "pickup_available": offer.pickup_available,
+        "status": offer.status,
+    }
 
 
 @router.get("/offers")
@@ -91,7 +112,7 @@ def list_offers(db: Session = Depends(get_db)):
 @router.post("/offers/{offer_id}/accept")
 def accept_offer(
     offer_id: int,
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     offer = db.get(Offer, offer_id)
@@ -102,12 +123,11 @@ def accept_offer(
     if not lot:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lot not found")
 
-    # If authenticated, verify caller is owner of the lot or admin
-    if current_user and current_user.role == "collector" and current_user.id != lot.collector_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only accept offers for lots that you own.",
-        )
+    verify_owner_or_admin(
+        lot.collector_id,
+        current_user,
+        detail="You can only accept offers for lots that you own.",
+    )
 
     if lot.status in ("handed_over", "payment_completed"):
         raise HTTPException(

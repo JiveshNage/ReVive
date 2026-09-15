@@ -4,10 +4,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import get_optional_current_user
+from app.auth import get_current_user, get_optional_current_user
 from app.config import settings
 from app.database import get_db
+from app.dependencies import verify_owner_or_admin
 from app.models import Handover, Lot, Material, Offer, Recycler, User
+from app.passport_service import (
+    format_passport_id,
+    generate_lot_certificate_hash,
+    generate_lot_reference,
+)
 from app.schemas import (
     HandoverOut,
     LotCreate,
@@ -36,7 +42,7 @@ def parse_lot_id(ref: str) -> int | None:
 @router.post("/lots", response_model=LotOut)
 def create_lot(
     payload: LotCreate,
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     if payload.quantity_kg <= 0 or payload.quantity_kg > 50000:
@@ -59,8 +65,16 @@ def create_lot(
     material_category = str(material.category)
     estimated = round(payload.quantity_kg * base_price_by_category.get(material_category, 75.0), 2)
 
-    # Secure collector identity: if authenticated user is present, use their user ID
-    collector_id = current_user.id if current_user and current_user.role == "collector" else payload.collector_id
+    # Secure collector identity: if collector, always use their authenticated ID
+    if current_user.role == "collector":
+        collector_id = current_user.id
+    elif current_user.role == "admin":
+        collector_id = payload.collector_id
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only collectors or administrators can create scrap lots.",
+        )
 
     lot = Lot(
         collector_id=collector_id,
@@ -73,21 +87,30 @@ def create_lot(
     db.add(lot)
     db.commit()
     db.refresh(lot)
+
+    lot.lot_reference = generate_lot_reference(lot.id)
+    db.commit()
+    db.refresh(lot)
     return lot
 
 
 @router.get("/lots", response_model=list[LotOut])
 def list_lots(
     collector_id: int | None = None,
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     stmt = select(Lot)
-    if collector_id is not None:
-        stmt = stmt.where(Lot.collector_id == collector_id)
-    elif current_user and current_user.role == "collector":
-        # Collector automatically views their own catalog of lots
+    if current_user.role == "collector":
+        # Collector is strictly scoped to their own catalog of lots
         stmt = stmt.where(Lot.collector_id == current_user.id)
+    elif current_user.role == "recycler":
+        if collector_id is not None:
+            stmt = stmt.where(Lot.collector_id == collector_id)
+    elif current_user.role == "admin":
+        if collector_id is not None:
+            stmt = stmt.where(Lot.collector_id == collector_id)
+
     lots = db.execute(stmt).scalars().all()
     return lots
 
@@ -131,7 +154,7 @@ def get_lot_handover(lot_id: int, db: Session = Depends(get_db)):
 @router.post("/lots/{lot_id}/payment", response_model=LotOut)
 def mark_lot_payment_complete(
     lot_id: int,
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     lot = db.get(Lot, lot_id)
@@ -150,11 +173,26 @@ def mark_lot_payment_complete(
             detail="Cannot complete payment before physical handover verification.",
         )
 
-    # Verify actor authorization
-    if current_user and current_user.role not in ("recycler", "admin"):
+    accepted_offer = db.execute(
+        select(Offer).where(Offer.lot_id == lot_id, Offer.status == "accepted")
+    ).scalar_one_or_none()
+
+    # Verify actor authorization: lot owner, transaction recycler, or admin
+    is_collector_owner = current_user.id == lot.collector_id
+    is_accepted_recycler = (
+        current_user.role == "recycler"
+        and accepted_offer is not None
+        and (
+            current_user.recycler_id == accepted_offer.recycler_id
+            or current_user.id == accepted_offer.recycler_id
+        )
+    )
+    is_admin = current_user.role == "admin"
+
+    if not (is_collector_owner or is_accepted_recycler or is_admin):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only authorized recyclers or administrators can finalize payment settlement.",
+            detail="Only the lot owner, the transaction recycler, or an administrator can mark payment complete.",
         )
 
     lot.status = "payment_completed"
@@ -188,14 +226,18 @@ def get_lot_traceability(lot_id: int, db: Session = Depends(get_db)):
     discrepancy = round(lot.quantity_kg - final_weight, 2) if final_weight is not None else None
     final_price = accepted_offer.offer_price if accepted_offer else None
 
-    # Generate tamper-evident SHA-256 digital certificate hash
-    hash_payload = (
-        f"lot:{lot.id}|collector:{lot.collector_id}|material:{material.name if material else 'unknown'}|"
-        f"init_qty:{lot.quantity_kg}|final_weight:{final_weight}|price:{final_price}|"
-        f"recycler:{recycler.id if recycler else 'none'}|sig:{handover.signature if handover else 'none'}|"
-        f"status:{lot.status}"
+    # Generate tamper-evident SHA-256 digital certificate hash via shared service
+    certificate_hash = generate_lot_certificate_hash(
+        lot_id=lot.id,
+        collector_id=lot.collector_id,
+        material_name=material.name if material else None,
+        quantity_kg=lot.quantity_kg,
+        final_weight_kg=final_weight,
+        final_price=final_price,
+        recycler_id=recycler.id if recycler else None,
+        signature=handover.signature if handover else None,
+        status=lot.status,
     )
-    certificate_hash = hashlib.sha256(hash_payload.encode("utf-8")).hexdigest()
     created_at_str = lot.created_at.isoformat() if lot.created_at else None
 
     timeline = [
@@ -320,15 +362,19 @@ def get_recycling_passport(reference_or_id: str, db: Session = Depends(get_db)):
     final_weight = handover.final_weight_kg if handover else None
     final_price = accepted_offer.offer_price if accepted_offer else None
 
-    hash_payload = (
-        f"lot:{lot.id}|collector:{lot.collector_id}|material:{material.name if material else 'unknown'}|"
-        f"init_qty:{lot.quantity_kg}|final_weight:{final_weight}|price:{final_price}|"
-        f"recycler:{recycler.id if recycler else 'none'}|sig:{handover.signature if handover else 'none'}|"
-        f"status:{lot.status}"
+    certificate_hash = generate_lot_certificate_hash(
+        lot_id=lot.id,
+        collector_id=lot.collector_id,
+        material_name=material.name if material else None,
+        quantity_kg=lot.quantity_kg,
+        final_weight_kg=final_weight,
+        final_price=final_price,
+        recycler_id=recycler.id if recycler else None,
+        signature=handover.signature if handover else None,
+        status=lot.status,
     )
-    certificate_hash = hashlib.sha256(hash_payload.encode("utf-8")).hexdigest()
 
-    passport_id = f"REV-2026-LOT-{lot.id:04d}"
+    passport_id = format_passport_id(lot.id)
     co2_saved = round(lot.quantity_kg * 1.44, 2)
     is_hazardous = material.is_hazardous if material else False
     toxic_diverted = round(lot.quantity_kg * (0.12 if is_hazardous else 0.03), 2)

@@ -18,6 +18,7 @@ class User(Base):
     license_no = Column(String(80), nullable=True)
     service_area = Column(String(150), nullable=True)
     custom_user_id = Column(String(50), unique=True, index=True, nullable=True)
+    recycler_id = Column(Integer, ForeignKey("recyclers.id", ondelete="SET NULL"), nullable=True)
     hashed_password = Column(String(255), nullable=True)
     verification_status = Column(String(40), nullable=False, default="NOT_SUBMITTED")
     is_active = Column(Boolean, default=True)
@@ -27,6 +28,7 @@ class User(Base):
     lots = relationship("Lot", back_populates="collector", cascade="all, delete-orphan")
     login_audits = relationship("LoginAudit", back_populates="user", cascade="all, delete-orphan")
     organization_documents = relationship("OrganizationDocument", foreign_keys="OrganizationDocument.organization_id", back_populates="organization", cascade="all, delete-orphan")
+    recycler = relationship("Recycler", foreign_keys=[recycler_id])
 
 
 class LoginAudit(Base):
@@ -59,6 +61,7 @@ class Lot(Base):
     __tablename__ = "lots"
 
     id = Column(Integer, primary_key=True, index=True)
+    lot_reference = Column(String(50), unique=True, index=True, nullable=True)
     collector_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     material_id = Column(Integer, ForeignKey("materials.id"), nullable=False, index=True)
     photo_url = Column(String(255), nullable=True)
@@ -81,6 +84,11 @@ class Recycler(Base):
     verified = Column(Boolean, default=False)
     location = Column(String(200), nullable=False)
     contact_phone = Column(String(20), nullable=True)
+    accepted_materials = Column(Text, nullable=True)
+    authorization_status = Column(String(80), default="Authorized")
+    offered_rate = Column(Text, nullable=True)
+    pickup_availability = Column(String(20), default="Yes")
+    service_area = Column(String(255), nullable=True)
 
     offers = relationship("Offer", back_populates="recycler", cascade="all, delete-orphan")
     handovers = relationship("Handover", back_populates="recycler", cascade="all, delete-orphan")
@@ -105,6 +113,7 @@ class Handover(Base):
     __tablename__ = "handover_records"
 
     id = Column(Integer, primary_key=True, index=True)
+    handover_reference = Column(String(50), unique=True, index=True, nullable=True)
     lot_id = Column(Integer, ForeignKey("lots.id", ondelete="CASCADE"), nullable=False, index=True)
     collector_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     recycler_id = Column(Integer, ForeignKey("recyclers.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -113,6 +122,9 @@ class Handover(Base):
     collector_confirmed = Column(Boolean, default=False)
     recycler_confirmed = Column(Boolean, default=False)
     signature = Column(String(255), nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    photo_url = Column(String(255), nullable=True)
     status = Column(String(30), nullable=False, default="confirmed")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

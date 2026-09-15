@@ -101,4 +101,37 @@ class ScrapLot {
   }
 
   bool get isInTransit => status == 'pickup' || (status == 'offers' && recyclerName != null);
+
+  factory ScrapLot.fromBackendJson(Map<String, dynamic> json) {
+    final materialMap = json['material'] as Map<String, dynamic>?;
+    final handoverMap = json['handover'] as Map<String, dynamic>?;
+    final recyclerMap = json['recycler'] as Map<String, dynamic>?;
+
+    final id = json['id'] as int? ?? 0;
+    final materialName = materialMap != null
+        ? (materialMap['name'] as String? ?? 'E-Waste Item')
+        : 'E-Waste Lot #$id';
+    final category = materialMap != null
+        ? (materialMap['category'] as String? ?? 'Electronic')
+        : 'Electronic';
+
+    final quantityKg = (json['quantity_kg'] as num?)?.toDouble() ?? 0.0;
+    final estimatedVal = (json['estimated_value'] as num?)?.toDouble() ?? (quantityKg * 400.0);
+    final statusStr = json['status'] as String? ?? 'created';
+
+    return ScrapLot(
+      id: id,
+      material: materialName,
+      category: category,
+      quantityKg: quantityKg,
+      estimatedValue: estimatedVal,
+      status: statusStr,
+      syncStatus: 'SYNCED',
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+      recyclerName: recyclerMap?['name'] as String?,
+      finalWeightKg: (handoverMap?['final_weight_kg'] as num?)?.toDouble(),
+      passportId: json['lot_reference'] as String? ?? 'REV-2026-LOT-${id.toString().padLeft(4, '0')}',
+      imagePath: json['photo_url'] as String?,
+    );
+  }
 }

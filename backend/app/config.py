@@ -49,7 +49,13 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    s = Settings()
+    if s.app_env.lower() in ("production", "prod") and s.secret_key == "change-me-in-production":
+        raise RuntimeError(
+            "CRITICAL SECURITY VIOLATION: secret_key must be configured and cannot use "
+            "the default 'change-me-in-production' in a production environment!"
+        )
+    return s
 
 
 settings = get_settings()

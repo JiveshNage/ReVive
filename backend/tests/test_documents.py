@@ -62,9 +62,22 @@ class TestOrganizationDocuments(unittest.TestCase):
             cls.db.commit()
             cls.db.refresh(cls.admin)
 
+        # Ensure collector exists for lot creation
+        cls.collector = cls.db.execute(select(User).where(User.phone == "9876543210")).scalars().first()
+        if not cls.collector:
+            cls.collector = User(
+                name="Test Collector",
+                phone="9876543210",
+                role="collector",
+            )
+            cls.db.add(cls.collector)
+            cls.db.commit()
+            cls.db.refresh(cls.collector)
+
         cls.token_org1 = create_access_token({"sub": cls.org1.phone, "user_id": cls.org1.id, "role": cls.org1.role})
         cls.token_org2 = create_access_token({"sub": cls.org2.phone, "user_id": cls.org2.id, "role": cls.org2.role})
         cls.token_admin = create_access_token({"sub": cls.admin.phone, "user_id": cls.admin.id, "role": cls.admin.role})
+        cls.token_collector = create_access_token({"sub": cls.collector.phone, "user_id": cls.collector.id, "role": cls.collector.role})
 
         # Clean existing test documents for isolated runs
         from app.models import DocumentAuditLog
@@ -227,10 +240,11 @@ class TestOrganizationDocuments(unittest.TestCase):
         lot_res = client.post(
             "/api/lots",
             json={
-                "collector_id": 1,
+                "collector_id": self.collector.id,
                 "material_id": 1,
                 "quantity_kg": 12.0,
             },
+            headers={"Authorization": f"Bearer {self.token_collector}"},
         )
         self.assertEqual(lot_res.status_code, 200)
         fresh_lot_id = lot_res.json()["id"]

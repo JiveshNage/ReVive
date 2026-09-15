@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth import require_role
 from app.config import settings
 from app.database import get_db
-from app.models import Material, Recycler
+from app.models import Material, Recycler, User
 from app.schemas import MaterialOut
 
 router = APIRouter(prefix=settings.api_v1_prefix, tags=["Materials & Recyclers"])
@@ -22,6 +23,7 @@ def create_material(
     category: str,
     description: str | None = None,
     is_hazardous: bool = False,
+    current_user: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
     material = Material(name=name, category=category, description=description, is_hazardous=is_hazardous)

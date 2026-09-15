@@ -1,9 +1,49 @@
+import csv
+import re
+from pathlib import Path
 from sqlalchemy.orm import Session
 
 from app.models import DocumentType, Material, Recycler, User
 
+DATASET_CSV_PATH = Path(__file__).resolve().parent.parent.parent / "dataset" / "recycler_dataset_large.csv"
+
 
 def seed_data(db: Session):
+    # 1. Seed Recycler Dataset from CSV if not already populated
+    if db.query(Recycler).count() < 100 and DATASET_CSV_PATH.exists():
+        recycler_records = []
+        with open(DATASET_CSV_PATH, mode="r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                rec_id_raw = row.get("Recycler ID", "")
+                num_match = re.search(r"\d+", rec_id_raw)
+                rec_id = int(num_match.group(0)) if num_match else None
+                auth_status = row.get("Authorization status", "Authorized")
+                is_verified = "authorized" in auth_status.lower()
+                recycler_records.append(
+                    Recycler(
+                        id=rec_id,
+                        name=row.get("Recycler name", f"Recycler {rec_id}"),
+                        verified=is_verified,
+                        location=row.get("Location", "India"),
+                        contact_phone=row.get("Contact", ""),
+                        accepted_materials=row.get("Accepted materials", ""),
+                        authorization_status=auth_status,
+                        offered_rate=row.get("Rate", ""),
+                        pickup_availability=row.get("Pickup availability", "Yes"),
+                        service_area=row.get("Service area", ""),
+                    )
+                )
+        if recycler_records:
+            db.bulk_save_objects(recycler_records)
+            db.commit()
+    elif db.query(Recycler).count() == 0:
+        db.add_all([
+            Recycler(id=1, name="EcoCycle Pune", verified=True, location="Pune, Maharashtra", contact_phone="9876540001"),
+            Recycler(id=2, name="GreenLoop Nashik", verified=True, location="Nashik, Maharashtra", contact_phone="9876540002"),
+        ])
+        db.commit()
+
     # Ensure all 3 persona accounts exist with statutory unique IDs
     collector = db.query(User).filter(User.phone == "9876543210").first()
     if not collector:
@@ -13,12 +53,27 @@ def seed_data(db: Session):
 
     recycler = db.query(User).filter(User.phone == "9123456780").first()
     if not recycler:
-        db.add(User(name="Raj Recycler", phone="9123456780", role="recycler", language="en", location="Pune, Maharashtra", company_name="EcoCycle Pune Authorized Facility", license_no="CPCB/EW/2024/0981", service_area="Maharashtra & Central India", email="recycler@revive-ewaste.gov.in", custom_user_id="REV-REC-2026-0812", verification_status="VERIFIED"))
+        db.add(User(
+            name="Raj Recycler",
+            phone="9123456780",
+            role="recycler",
+            language="en",
+            location="Pune, Maharashtra",
+            company_name="EcoCycle Pune Authorized Facility",
+            license_no="CPCB/EW/2024/0981",
+            service_area="Maharashtra & Central India",
+            email="recycler@revive-ewaste.gov.in",
+            custom_user_id="REV-REC-2026-0812",
+            verification_status="VERIFIED",
+            recycler_id=1,
+        ))
     else:
         if not recycler.custom_user_id:
             recycler.custom_user_id = "REV-REC-2026-0812"
         if not recycler.verification_status:
             recycler.verification_status = "VERIFIED"
+        if not recycler.recycler_id:
+            recycler.recycler_id = 1
 
     admin = db.query(User).filter(User.phone == "9998887770").first()
     if not admin:
@@ -32,12 +87,6 @@ def seed_data(db: Session):
             Material(name="PCB", category="Electronic", description="Printed circuit board", is_hazardous=True),
             Material(name="Laptop Battery", category="Battery", description="Used battery pack", is_hazardous=True),
             Material(name="Mobile Phone", category="Device", description="Used handset", is_hazardous=False),
-        ])
-
-    if db.query(Recycler).count() == 0:
-        db.add_all([
-            Recycler(name="EcoCycle Pune", verified=True, location="Pune, Maharashtra", contact_phone="9876540001"),
-            Recycler(name="GreenLoop Nashik", verified=True, location="Nashik, Maharashtra", contact_phone="9876540002"),
         ])
 
     # Seed Configurable Document Types if none exist

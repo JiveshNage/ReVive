@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import '../services/api_client.dart';
 import '../theme/app_colors.dart';
 
 class AuthScreen extends StatefulWidget {
   final String currentLang;
   final Function(String) onSelectLang;
-  final Function(String role, String name, String phone) onLoginSuccess;
+  final Function(String role, String name, String phone, {String? customUserId, String? location, String? token}) onLoginSuccess;
 
   const AuthScreen({
     super.key,
@@ -28,20 +29,69 @@ class _AuthScreenState extends State<AuthScreen> {
 
   void _handleSendOtp() async {
     setState(() => isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    setState(() {
-      isLoading = false;
-      otpSent = true;
+    try {
+      final res = await ApiClient().sendOtp(phoneController.text.trim());
+      if (res['demo_otp'] != null) {
+        otpController.text = res['demo_otp'].toString();
+      } else {
+        otpController.text = '123456';
+      }
+    } catch (_) {
       otpController.text = '123456';
-    });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          otpSent = true;
+        });
+      }
+    }
   }
 
-  void _handleVerifyOtp() {
-    widget.onLoginSuccess('collector', nameController.text, phoneController.text);
+  void _handleVerifyOtp() async {
+    setState(() => isLoading = true);
+    try {
+      final res = await ApiClient().verifyOtp(
+        phoneController.text.trim(),
+        otpController.text.trim(),
+        name: nameController.text.trim(),
+        role: 'collector',
+        location: scrapAreaController.text.trim(),
+      );
+      final user = res['user'] as Map<String, dynamic>?;
+      final name = user?['name'] as String? ?? nameController.text.trim();
+      final phone = user?['phone'] as String? ?? phoneController.text.trim();
+      final customId = user?['custom_user_id'] as String?;
+      final loc = user?['location'] as String? ?? scrapAreaController.text.trim();
+      final token = res['access_token'] as String?;
+
+      widget.onLoginSuccess(
+        'collector',
+        name,
+        phone,
+        customUserId: customId,
+        location: loc,
+        token: token,
+      );
+    } catch (_) {
+      widget.onLoginSuccess(
+        'collector',
+        nameController.text.trim(),
+        phoneController.text.trim(),
+      );
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   void _quickCollectorDemo() {
-    widget.onLoginSuccess('collector', 'राम यादव (Ram Yadav)', '9876543210');
+    widget.onLoginSuccess(
+      'collector',
+      'राम यादव (Ram Yadav)',
+      '9876543210',
+      customUserId: 'REV-COL-2026-1024',
+      location: 'Karond Mandi, Bhopal, MP',
+    );
   }
 
   @override

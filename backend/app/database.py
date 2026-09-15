@@ -47,9 +47,10 @@ def ensure_db_initialized() -> None:
     if "sqlite" in str(engine.url):
         with engine.connect() as conn:
             try:
+                # 1. users migrations
                 res = conn.exec_driver_sql("PRAGMA table_info(users)").fetchall()
                 existing_cols = {row[1] for row in res}
-                cols_to_add = [
+                user_cols = [
                     ("location", "VARCHAR(120) DEFAULT 'Bhopal, MP'"),
                     ("email", "VARCHAR(120)"),
                     ("company_name", "VARCHAR(150)"),
@@ -58,13 +59,48 @@ def ensure_db_initialized() -> None:
                     ("custom_user_id", "VARCHAR(50)"),
                     ("hashed_password", "VARCHAR(255)"),
                     ("verification_status", "VARCHAR(40) DEFAULT 'NOT_SUBMITTED'"),
+                    ("recycler_id", "INTEGER"),
                 ]
-                for col_name, col_type in cols_to_add:
+                for col_name, col_type in user_cols:
                     if col_name not in existing_cols:
                         conn.exec_driver_sql(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
+
+                # 2. recyclers migrations
+                rec_res = conn.exec_driver_sql("PRAGMA table_info(recyclers)").fetchall()
+                existing_rec_cols = {row[1] for row in rec_res}
+                rec_cols = [
+                    ("accepted_materials", "TEXT"),
+                    ("authorization_status", "VARCHAR(80) DEFAULT 'Authorized'"),
+                    ("offered_rate", "TEXT"),
+                    ("pickup_availability", "VARCHAR(20) DEFAULT 'Yes'"),
+                    ("service_area", "VARCHAR(255)"),
+                ]
+                for col_name, col_type in rec_cols:
+                    if col_name not in existing_rec_cols:
+                        conn.exec_driver_sql(f"ALTER TABLE recyclers ADD COLUMN {col_name} {col_type}")
+
+                # 3. lots migrations
+                lot_res = conn.exec_driver_sql("PRAGMA table_info(lots)").fetchall()
+                existing_lot_cols = {row[1] for row in lot_res}
+                if "lot_reference" not in existing_lot_cols:
+                    conn.exec_driver_sql("ALTER TABLE lots ADD COLUMN lot_reference VARCHAR(50)")
+
+                # 4. handover_records migrations
+                hnd_res = conn.exec_driver_sql("PRAGMA table_info(handover_records)").fetchall()
+                existing_hnd_cols = {row[1] for row in hnd_res}
+                hnd_cols = [
+                    ("handover_reference", "VARCHAR(50)"),
+                    ("latitude", "FLOAT"),
+                    ("longitude", "FLOAT"),
+                    ("photo_url", "VARCHAR(255)"),
+                ]
+                for col_name, col_type in hnd_cols:
+                    if col_name not in existing_hnd_cols:
+                        conn.exec_driver_sql(f"ALTER TABLE handover_records ADD COLUMN {col_name} {col_type}")
+
                 conn.commit()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("SQLite migration notice: %s", e)
 
 
 def get_db():
