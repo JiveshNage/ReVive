@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     # OpenRouter API Key for AI assistance
     openrouter_api_key: str = ""
 
+    # Firebase Authentication Configuration
+    firebase_project_id: str = ""
+    firebase_credentials_path: str = ""
+
     # CORS Origins (comma-separated list for production)
     cors_origins: str = ""
 

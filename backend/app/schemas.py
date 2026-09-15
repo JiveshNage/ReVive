@@ -113,10 +113,16 @@ class PriceEstimateOut(BaseModel):
     location: str
     weight_kg: float
     price_per_kg_median: float
+    suggested_rate_per_kg: float | None = None
     estimated_value: float
     price_min: float
     price_max: float
     samples: int
+    trend_pct_7d: float | None = None
+    trend_direction: str | None = None
+    provenance_status: str | None = None
+    why_this_price: list[dict] = []
+    historical_7d: list[dict] = []
 
 
 class RecyclerMatchOut(BaseModel):
@@ -415,4 +421,102 @@ class VerificationSummaryOut(BaseModel):
     can_transact: bool
     message: str
     documents: list[OrganizationDocumentOut] = []
+
+
+class FirebaseVerifyRequest(BaseModel):
+    id_token: str = Field(..., min_length=10)
+
+
+class PaymentCreate(BaseModel):
+    lot_id: int = Field(..., ge=1)
+    handover_id: int | None = None
+    amount: float = Field(..., gt=0)
+    payment_method: str = Field(default="CASH")  # CASH or UPI
+    reference_id: str | None = None
+    notes: str | None = None
+
+
+class PaymentOut(BaseModel):
+    id: int
+    payment_reference: str
+    lot_id: int
+    collector_id: int
+    recycler_id: int
+    amount: float
+    payment_method: str
+    payment_status: str
+    reference_id: str | None = None
+    cash_received_confirmed: bool
+    notes: str | None = None
+    created_at: str | None = None
+
+
+class CollectorEarningsTransaction(BaseModel):
+    lot_id: int
+    lot_reference: str
+    material_name: str
+    material_category: str
+    quantity_kg: float
+    final_amount: float
+    payment_method: str
+    status: str  # PAID, PENDING
+    date: str
+
+
+class CollectorEarningsSummary(BaseModel):
+    collector_id: int
+    collector_name: str
+    today_earnings: float
+    weekly_earnings: float
+    monthly_earnings: float
+    pending_dues: float
+    completed_cash_amount: float
+    completed_digital_amount: float
+    total_lifetime_earnings: float
+    total_completed_lots: int
+    total_pending_lots: int
+    transactions: list[CollectorEarningsTransaction] = []
+
+
+class CollectorReputationOut(BaseModel):
+    collector_id: int
+    custom_user_id: str
+    collector_name: str
+    reputation_tier: str
+    total_transactions: int
+    weight_accuracy_pct: float
+    on_time_handover_pct: float
+    recycler_rating: float
+    formalized_kg: float
+    total_earnings_inr: float
+
+
+class PriceBreakdownItem(BaseModel):
+    factor: str
+    amount_inr: float
+    description: str
+
+
+class PriceTrendPoint(BaseModel):
+    day: str
+    price_per_kg: float
+
+
+class PriceExplanationOut(BaseModel):
+    category: str
+    pricing_category: str
+    location: str
+    weight_kg: float
+    price_per_kg_median: float
+    estimated_value: float
+    price_min: float
+    price_max: float
+    suggested_rate_per_kg: float
+    samples: int
+    trend_pct_7d: float
+    trend_direction: str  # up, down, stable
+    provenance_status: str  # REAL_MARKET_INDEX, RECENT, DEMO
+    why_this_price: list[PriceBreakdownItem] = []
+    historical_7d: list[PriceTrendPoint] = []
+
 

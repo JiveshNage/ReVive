@@ -204,3 +204,45 @@ class DocumentAuditLog(Base):
     organization = relationship("User", foreign_keys=[organization_id])
     actor = relationship("User", foreign_keys=[actor_id])
 
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    payment_reference = Column(String(50), unique=True, index=True, nullable=True)
+    lot_id = Column(Integer, ForeignKey("lots.id", ondelete="CASCADE"), nullable=False, index=True)
+    handover_id = Column(Integer, ForeignKey("handover_records.id", ondelete="SET NULL"), nullable=True, index=True)
+    collector_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    recycler_id = Column(Integer, ForeignKey("recyclers.id", ondelete="CASCADE"), nullable=False, index=True)
+    amount = Column(Float, nullable=False, default=0.0)
+    payment_method = Column(String(30), nullable=False, default="CASH")  # CASH, UPI, BANK_TRANSFER
+    payment_status = Column(String(30), nullable=False, default="COMPLETED")  # COMPLETED, PENDING, FAILED
+    reference_id = Column(String(100), nullable=True)  # UPI UTR or Cash Voucher
+    cash_received_confirmed = Column(Boolean, default=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    lot = relationship("Lot")
+    collector = relationship("User", foreign_keys=[collector_id])
+    recycler = relationship("Recycler", foreign_keys=[recycler_id])
+    handover = relationship("Handover", foreign_keys=[handover_id])
+
+
+class CollectorReputation(Base):
+    __tablename__ = "collector_reputations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    collector_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    total_transactions = Column(Integer, nullable=False, default=0)
+    weight_accuracy_pct = Column(Float, nullable=False, default=96.0)
+    on_time_handover_pct = Column(Float, nullable=False, default=95.0)
+    recycler_rating = Column(Float, nullable=False, default=4.9)
+    formalized_kg = Column(Float, nullable=False, default=0.0)
+    total_earnings_inr = Column(Float, nullable=False, default=0.0)
+    reputation_tier = Column(String(40), nullable=False, default="VERIFIED_COLLECTOR")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    collector = relationship("User")
+
+

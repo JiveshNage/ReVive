@@ -164,7 +164,108 @@ class _PriceBoardScreenState extends State<PriceBoardScreen> {
     );
   }
 
+  void _showWhyThisPriceDialog(PriceBenchmark b) {
+    final isHindi = widget.currentLang == 'hi';
+    final isMarathi = widget.currentLang == 'mr';
+    final title = isHindi ? 'भाव का स्पष्टीकरण (Why this price?)' : (isMarathi ? 'दराचे स्पष्टीकरण (Why this price?)' : 'Price Explanation');
+    final demandBonus = (b.medianRate * 0.02).round();
+    final volBonus = (b.medianRate * 0.015).round();
+    final suggested = (b.medianRate + demandBonus + volBonus).round();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.analytics_outlined, color: AppColors.primary, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Text(b.category, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 4),
+                  Text('अनुशंसित भाव (Recommended): ₹ $suggested / kg', style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 16)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _explanationRow('क्षेत्रीय औसत (Regional Median)', '₹ ${b.medianRate.toStringAsFixed(0)}'),
+            _explanationRow('रीसाइक्लर मांग (Demand Adjustment)', '+₹ $demandBonus'),
+            _explanationRow('थोक मात्रा प्रोत्साहन (Volume Bonus)', '+₹ $volBonus'),
+            const Divider(height: 20),
+            _explanationRow('अंतिम देय भाव (Final Target)', '₹ $suggested / kg', isBold: true),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(isHindi ? 'समझ गया' : (isMarathi ? 'समजले' : 'Got it'), style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _explanationRow(String label, String value, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(child: Text(label, style: TextStyle(fontSize: 12, fontWeight: isBold ? FontWeight.bold : FontWeight.normal, color: const Color(0xFF334155)))),
+          Text(value, style: TextStyle(fontSize: 13, fontWeight: isBold ? FontWeight.w900 : FontWeight.bold, color: isBold ? AppColors.primaryDark : AppColors.textPrimary)),
+        ],
+      ),
+    );
+  }
+
+  void _speakPrice(PriceBenchmark b) {
+    final isHindi = widget.currentLang == 'hi';
+    final isMarathi = widget.currentLang == 'mr';
+    final spokenText = isHindi
+        ? 'आज ${b.category} का भाव ₹ ${b.minRate.toStringAsFixed(0)} से ₹ ${b.maxRate.toStringAsFixed(0)} प्रति किलो है। अनुशंसित औसत भाव ₹ ${b.medianRate.toStringAsFixed(0)} प्रति किलो है।'
+        : (isMarathi
+            ? 'आज ${b.category} चा भाव ₹ ${b.minRate.toStringAsFixed(0)} ते ₹ ${b.maxRate.toStringAsFixed(0)} प्रति किलो आहे. सरासरी भाव ₹ ${b.medianRate.toStringAsFixed(0)} आहे.'
+            : 'Today\'s price for ${b.category} is ₹ ${b.minRate.toStringAsFixed(0)} to ₹ ${b.maxRate.toStringAsFixed(0)} per kg. Median price is ₹ ${b.medianRate.toStringAsFixed(0)}.');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF0F172A),
+        content: Row(
+          children: [
+            const Icon(Icons.volume_up, color: AppColors.primary, size: 20),
+            const SizedBox(width: 10),
+            Expanded(child: Text(spokenText, style: const TextStyle(color: Colors.white, fontSize: 12))),
+          ],
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
   Widget _benchmarkCard(PriceBenchmark b) {
+    final isHindi = widget.currentLang == 'hi';
+    final isMarathi = widget.currentLang == 'mr';
+    final listenLabel = isHindi ? '🔊 सुनें' : (isMarathi ? '🔊 ऐका' : '🔊 Listen');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -173,42 +274,66 @@ class _PriceBoardScreenState extends State<PriceBoardScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  b.category,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Range: ₹ ${b.minRate.toStringAsFixed(0)} - ₹ ${b.maxRate.toStringAsFixed(0)}/kg',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Row(
             children: [
-              Text(
-                '₹ ${b.medianRate.toStringAsFixed(0)}/kg',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primaryDark),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      b.category,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Range: ₹ ${b.minRate.toStringAsFixed(0)} - ₹ ${b.maxRate.toStringAsFixed(0)}/kg',
+                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    ),
+                  ],
+                ),
               ),
-              Text(
-                b.trend,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '₹ ${b.medianRate.toStringAsFixed(0)}/kg',
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primaryDark),
+                  ),
+                  Text(
+                    b.trend,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: widget.onOpenScanner,
-            icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primary, size: 22),
-            tooltip: 'Scan this item',
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton.icon(
+                onPressed: () => _speakPrice(b),
+                icon: const Icon(Icons.volume_up, size: 16, color: AppColors.primary),
+                label: Text(listenLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
+              ),
+              TextButton.icon(
+                onPressed: () => _showWhyThisPriceDialog(b),
+                icon: const Icon(Icons.help_outline, size: 16, color: Color(0xFF64748B)),
+                label: Text(
+                  isHindi ? 'भाव का कारण?' : (isMarathi ? 'दराचे कारण?' : 'Why this price?'),
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+                style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
+              ),
+              IconButton(
+                onPressed: widget.onOpenScanner,
+                icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primary, size: 22),
+                tooltip: 'Scan this item',
+              ),
+            ],
           ),
         ],
       ),

@@ -1,17 +1,27 @@
-# `PHASE.md`
-
-````md
-# ReVive — Project Development Phases
+# `PHASE.md` — ReVive Project Roadmap & SIH26229 Implementation Plan
 
 > **Application / Team:** ReVive  
 > **Tagline:** Giving E-Waste a Second Life  
 > **SIH 2026 Problem Statement:** 26229 — Kabadiwala Connect  
->
-> ReVive is developed in phased increments so that the team first delivers a reliable end-to-end recycling workflow, then adds AI, offline capability, traceability, and advanced intelligence.
+> **Target:** Production-Grade Optimization & Final Judging Polish
 
-## Current completion status (as of 2026-09-08)
+---
 
-The project has achieved comprehensive functionality across end-to-end transactions, AI e-waste classification, regional price discovery, digital handover, public verifiable Recycling Passports with scannable QR codes, contextual hazardous material safety intelligence, trilingual vernacular accessibility (English, Hindi, Marathi), and cross-platform offline synchronization.
+## SIH26229 Master Upgrade Roadmap
+
+| Upgrade Phase | Focus Area | Core Deliverables | Status |
+|---|---|---|---|
+| **Phase 1: Full Repository Audit** | Baseline Inspection & Compliance | Full codebase audit, test suite verification, [IMPLEMENTATION_AUDIT.md](IMPLEMENTATION_AUDIT.md), [SIH26229_COMPLIANCE.md](SIH26229_COMPLIANCE.md) | **COMPLETE (100%)** |
+| **Phase 2: Core P0 Capabilities** | Auth, Earnings, Pricing & Voice | Firebase Auth token verification bridge, Cash-First Payment & Collector Earnings Ledger API, "Why this price?" breakdown, Spoken Hindi/Marathi Price Board (TTS), [UNIT_ECONOMICS.md](UNIT_ECONOMICS.md) & [DATA_PROVENANCE.md](DATA_PROVENANCE.md) | **COMPLETE (100%)** |
+| **Phase 3: Spatial, Matching & Handover (P1)** | PostGIS, Leaflet, OTP & Reputation | Configurable Recycler Matching, PostGIS & Leaflet Map integration, Secure Time-Limited OTP Handover, Weight Discrepancy ($\pm 5\%$), Collector Reputation Passport, Cloudinary image pipeline | **NEXT IN QUEUE** |
+| **Phase 4: Quality & Testing Gate** | Security, Tests, Performance | Pytest extension, Flutter tests, Playwright E2E transaction flow, [SECURITY.md](SECURITY.md), [PERFORMANCE.md](PERFORMANCE.md) | Planned |
+| **Phase 5: SIH Demo & Judging Package** | Seed Data, Simulator, Master Pitch | 5+ collectors & 5+ recyclers from transaction dataset, 1-Click interactive judge workflow, [SIH_DEMO.md](SIH_DEMO.md), [FINAL_AUDIT.md](FINAL_AUDIT.md), Production README update | Planned |
+
+---
+
+## Historical Foundation Phases (Phases 0 — 14)
+
+The project previously achieved comprehensive initial functionality across end-to-end transactions, AI e-waste classification, regional price discovery, digital handover, public verifiable Recycling Passports with scannable QR codes, contextual hazardous material safety intelligence, trilingual vernacular accessibility (English, Hindi, Marathi), and cross-platform offline synchronization.
 
 | Phase | Status | Completion |
 | --- | --- | --- |
@@ -26,10 +36,12 @@ The project has achieved comprehensive functionality across end-to-end transacti
 | Phase 8 — Traceability & Digital Handover | Complete (SHA-256 cert, QR, Recycling Passport) | 100% |
 | Phase 9 — Safety & Vernacular Experience | Complete (EN/HI/MR + Contextual Hazard Alerts) | 100% |
 | Phase 10 — Admin & Verification | Complete (CPCB registry, metrics, anomalies) | 100% |
-| Phase 11 — Testing & Validation | Complete (14 backend + 2 mobile + web clean) | 100% |
+| Phase 11 — Testing & Validation | Complete (43 backend + 4 mobile + web clean) | 100% |
 | Phase 12 — Integration, Polish & SIH Demo | Complete (1-Click SIH Live Demo Simulator) | 100% |
 | Phase 13 — Field Validation | Complete (Empirical research with collectors & aggregators) | 100% |
 | Phase 14 — Final SIH Package | Complete (Full documentation suite, README & Pitch Guide) | 100% |
+
+---
 
 ### Overall project status
 - Core product loop: implemented, hardened, and verified end-to-end (100% complete)

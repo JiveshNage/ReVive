@@ -4,9 +4,16 @@
 - Project goal: build an AI-enabled, offline-first e-waste marketplace, digital passport, and traceability platform.
 - Current working product focus: Smart India Hackathon 2026 (Problem Statement 26229: Kabadiwala Connect) complete package.
 - Core workflow: identify material -> create lot -> estimate value -> receive offers -> accept offer -> handover -> payment -> traceability & passport.
-- Current active milestone: **100% COMPLETE across all 14 phases (Phase 0 through Phase 14)** of [Phase.md](Phase.md).
-- Current state: all test suites verified green (backend pytest 14/14 passed, mobile flutter test 2/2 passed, web vite build passed in 937ms).
-- Field Validation & Submission Package: Field research completed in Bhopal & Pune (`Field_Validation.md`), OpenAPI specification fully documented (`api.md`), master presentation and live judging guide created (`SIH_PITCH.md`), and production homepage updated (`README.md`).
+- Current active milestone: **SIH26229 Master Upgrade & Production Optimization** ([Phase.md](Phase.md)).
+- Phase 1 (Audit & Baseline): **100% COMPLETE**. Created [IMPLEMENTATION_AUDIT.md](IMPLEMENTATION_AUDIT.md) and [SIH26229_COMPLIANCE.md](SIH26229_COMPLIANCE.md).
+- Phase 2 (Core P0 Capabilities): **100% COMPLETE**.
+  - Integrated Firebase Auth token verification bridge (`POST /api/auth/firebase/verify`) with strict server-side role enforcement.
+  - Implemented Cash-First Payment (`POST /api/lots/{id}/pay`) and Collector Earnings Ledger (`GET /api/collector/{id}/earnings`, `GET /api/collector/{id}/reputation`).
+  - Enhanced Price Engine with "Why this price?" itemized breakdown and 7-day trend curve.
+  - Added Spoken Price Board (`🔊 सुनें`) in Hindi/Marathi and "भाव का कारण?" explanation dialog on mobile.
+  - Published [UNIT_ECONOMICS.md](UNIT_ECONOMICS.md) and [DATA_PROVENANCE.md](DATA_PROVENANCE.md).
+  - All test suites green: **46/46 backend pytest passed**, **4/4 mobile flutter tests passed**, **Vite web build clean (0 errors)**.
+- Next immediate milestone: **Phase 3 (Spatial Intelligence, Matching & Verified Handover)** — Configurable Recycler Matching, PostGIS & Leaflet Map integration, Secure Time-Limited OTP Handover, Weight Discrepancy tolerance ($\pm 5\%$), and Cloudinary image pipeline.
 
 ## What has already been built
 - FastAPI backend with models for users, materials, lots, recyclers, offers, and handover records.

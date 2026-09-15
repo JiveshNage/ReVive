@@ -12,6 +12,8 @@ from app.auth import (
     get_current_user,
     get_optional_current_user,
     hash_password,
+    resolve_or_create_firebase_user,
+    verify_firebase_token,
     verify_password,
 )
 from app.config import settings
@@ -19,6 +21,7 @@ from app.database import get_db
 from app.email_service import send_otp_email
 from app.models import LoginAudit, User
 from app.schemas import (
+    FirebaseVerifyRequest,
     OtpSendRequest,
     OtpSendResponse,
     OtpVerifyRequest,
@@ -248,6 +251,47 @@ def login_with_password(payload: UserLoginRequest, db: Session = Depends(get_db)
     db.commit()
 
     token = issue_user_jwt(user, user.phone)
+    return TokenResponse(
+        access_token=token,
+        token_type="bearer",
+        user=build_user_profile_out(user),
+        is_new_user=False,
+    )
+
+
+@router.post("/firebase/verify", response_model=TokenResponse)
+def verify_firebase_auth(
+    payload: FirebaseVerifyRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Verify a Firebase ID Token from Flutter/Web clients and return a ReVive session JWT.
+    Enforces server-side authorization: new users are strictly created with 'collector' role.
+    """
+    claims = verify_firebase_token(payload.id_token)
+    if not claims:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired Firebase ID token.",
+        )
+    user = resolve_or_create_firebase_user(claims, db)
+    if not getattr(user, "is_active", True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is deactivated.",
+        )
+
+    audit = LoginAudit(
+        user_id=user.id,
+        phone=user.phone,
+        login_type="firebase",
+        status="success",
+        ip_address="127.0.0.1",
+    )
+    db.add(audit)
+    db.commit()
+
+    token = issue_user_jwt(user, user.phone or str(user.id))
     return TokenResponse(
         access_token=token,
         token_type="bearer",

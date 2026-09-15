@@ -43,6 +43,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def ensure_db_initialized() -> None:
+    import app.models  # noqa: F401 - Register all models with Base.metadata
     Base.metadata.create_all(bind=engine)
     if "sqlite" in str(engine.url):
         with engine.connect() as conn:

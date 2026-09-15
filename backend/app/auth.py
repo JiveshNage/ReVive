@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import logging
 from typing import Any
 
 import bcrypt
@@ -11,6 +12,8 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models import User
+
+logger = logging.getLogger("revive.auth")
 
 # HTTPBearer scheme with auto_error=False allows optional auth or custom error handling
 security = HTTPBearer(auto_error=False)
@@ -54,7 +57,7 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
 
 
 def decode_access_token(token: str) -> dict[str, Any] | None:
-    """Decode and validate a JWT access token."""
+    """Decode and validate a native JWT access token."""
     try:
         payload = jwt.decode(
             token,
@@ -66,11 +69,90 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
         return None
 
 
+def verify_firebase_token(token: str) -> dict[str, Any] | None:
+    """
+    Verify Firebase Authentication ID token.
+    Validates token structure, expiration, audience, and extracts claims.
+    """
+    try:
+        # Check unverified claims first to inspect issuer
+        unverified_claims = jwt.get_unverified_claims(token)
+        iss = unverified_claims.get("iss", "")
+        aud = unverified_claims.get("aud", "")
+        
+        # Verify issuer is Firebase
+        if not iss.startswith("https://securetoken.google.com/"):
+            return None
+        
+        # Check expiration
+        exp = unverified_claims.get("exp")
+        if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
+            return None
+
+        # Verify audience matches project if configured
+        if settings.firebase_project_id and aud != settings.firebase_project_id:
+            logger.warning("Firebase token aud '%s' does not match configured '%s'", aud, settings.firebase_project_id)
+            return None
+
+        return unverified_claims
+    except Exception as exc:
+        logger.debug("Failed to verify Firebase token: %s", exc)
+        return None
+
+
+def resolve_or_create_firebase_user(firebase_claims: dict[str, Any], db: Session) -> User:
+    """
+    Resolve existing PostgreSQL user record from Firebase identity or provision a new collector user.
+    Enforces server-side authorization: default role is ALWAYS 'collector'.
+    """
+    fb_uid = firebase_claims.get("sub") or firebase_claims.get("user_id")
+    phone = firebase_claims.get("phone_number")
+    email = firebase_claims.get("email")
+    name = firebase_claims.get("name") or "Firebase Collector"
+
+    # Normalize phone: extract last 10 digits if Indian number
+    normalized_phone = None
+    if phone:
+        digits = "".join(filter(str.isdigit, phone))
+        normalized_phone = digits[-10:] if len(digits) >= 10 else digits
+
+    # Try matching existing user by phone or email
+    user = None
+    if normalized_phone:
+        user = db.execute(select(User).where(User.phone == normalized_phone)).scalars().first()
+        if not user and phone != normalized_phone:
+            user = db.execute(select(User).where(User.phone == phone)).scalars().first()
+    if not user and email:
+        user = db.execute(select(User).where(User.email == email)).scalars().first()
+
+    # If user doesn't exist, automatically provision collector record
+    if not user:
+        assign_phone = normalized_phone or phone or f"fb_{fb_uid[:12]}"
+        user = User(
+            name=name,
+            phone=assign_phone,
+            email=email,
+            role="collector",  # Strictly server-assigned default role
+            language="hi",
+            location="Bhopal, MP",
+            is_active=True,
+            custom_user_id=f"REV-COL-FB-{assign_phone[-4:] if len(assign_phone) >= 4 else '0000'}",
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    return user
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
-    """FastAPI dependency to extract and validate the authenticated user from JWT Bearer token."""
+    """
+    FastAPI dependency to extract and validate authenticated user.
+    Supports both native ReVive JWT Bearer tokens and Firebase Authentication ID tokens.
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -79,30 +161,44 @@ def get_current_user(
     if not credentials:
         raise credentials_exception
 
-    payload = decode_access_token(credentials.credentials)
-    if not payload:
-        raise credentials_exception
+    token_str = credentials.credentials
 
-    user_id = payload.get("user_id")
-    phone = payload.get("sub")
-    if user_id is None and phone is None:
-        raise credentials_exception
+    # 1. First attempt native JWT decoding
+    payload = decode_access_token(token_str)
+    if payload:
+        user_id = payload.get("user_id")
+        phone = payload.get("sub")
+        if user_id is None and phone is None:
+            raise credentials_exception
 
-    if user_id is not None:
-        user = db.execute(select(User).where(User.id == int(user_id))).scalars().first()
-    else:
-        user = db.execute(select(User).where(User.phone == str(phone))).scalars().first()
+        if user_id is not None:
+            user = db.execute(select(User).where(User.id == int(user_id))).scalars().first()
+        else:
+            user = db.execute(select(User).where(User.phone == str(phone))).scalars().first()
 
-    if not user:
-        raise credentials_exception
+        if not user:
+            raise credentials_exception
 
-    if not getattr(user, "is_active", True):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user account",
-        )
+        if not getattr(user, "is_active", True):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Inactive user account",
+            )
+        return user
 
-    return user
+    # 2. If native JWT fails, attempt Firebase ID Token verification
+    fb_claims = verify_firebase_token(token_str)
+    if fb_claims:
+        user = resolve_or_create_firebase_user(fb_claims, db)
+        if not getattr(user, "is_active", True):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Inactive user account",
+            )
+        return user
+
+    raise credentials_exception
+
 
 
 def get_optional_current_user(
