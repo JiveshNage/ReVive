@@ -37,7 +37,15 @@ export type RecyclerMatch = {
   rate?: string | null;
   pickup_availability: string;
   service_area: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  distance_km?: number | null;
   score: number;
+  material_compatibility_score?: number;
+  rate_score?: number;
+  proximity_score?: number;
+  pickup_capacity_score?: number;
+  compliance_score?: number;
 };
 
 export type Offer = {

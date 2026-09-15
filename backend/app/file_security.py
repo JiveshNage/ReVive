@@ -118,6 +118,71 @@ def sanitize_and_save_upload(
     return destination
 
 
+def upload_image_pipeline(
+    file_bytes: bytes,
+    original_filename: str | None = None,
+    content_type: str | None = None,
+    folder: str = "revive_lots",
+) -> dict:
+    """
+    Low-Bandwidth Image Pipeline (SIH26229 Requirement):
+    1. Validates image structure, headers, and magic-bytes.
+    2. Enforces client/edge size optimization (< 500 KB target).
+    3. If Cloudinary credentials configured, uploads to Cloudinary CDN with automatic WebP delivery.
+    4. Otherwise, seamlessly falls back to secure local isolated UUID storage.
+    
+    Returns:
+        dict with { "url": str, "provider": str, "file_size": int, "format": str }
+    """
+    is_valid, err_msg, img_format = validate_image_upload(file_bytes, content_type)
+    if not is_valid:
+        raise ValueError(err_msg)
+
+    # Cloudinary Upload Path if configured
+    if settings.cloudinary_cloud_name and settings.cloudinary_api_key and settings.cloudinary_api_secret:
+        try:
+            import cloudinary
+            import cloudinary.uploader
+
+            cloudinary.config(
+                cloud_name=settings.cloudinary_cloud_name,
+                api_key=settings.cloudinary_api_key,
+                api_secret=settings.cloudinary_api_secret,
+                secure=True,
+            )
+            upload_result = cloudinary.uploader.upload(
+                file_bytes,
+                folder=folder,
+                resource_type="image",
+                format="webp",
+                quality="auto:eco",
+                transformation=[
+                    {"width": 1024, "height": 1024, "crop": "limit"},
+                    {"fetch_format": "auto"},
+                ],
+            )
+            secure_url = upload_result.get("secure_url") or upload_result.get("url")
+            logger.info("Uploaded to Cloudinary CDN: %s", secure_url)
+            return {
+                "url": secure_url,
+                "provider": "cloudinary",
+                "file_size": len(file_bytes),
+                "format": "webp",
+            }
+        except Exception as exc:
+            logger.warning("Cloudinary upload failed; falling back to local secure storage: %s", exc)
+
+    # Local Storage Fallback
+    local_path = sanitize_and_save_upload(file_bytes, original_filename)
+    relative_url = f"/uploads/{local_path.name}"
+    return {
+        "url": relative_url,
+        "provider": "local",
+        "file_size": len(file_bytes),
+        "format": img_format.lower(),
+    }
+
+
 # Allowed document MIME types
 ALLOWED_DOC_MIMES = {
     "application/pdf": ".pdf",

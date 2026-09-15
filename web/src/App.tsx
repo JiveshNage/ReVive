@@ -659,6 +659,25 @@ export function App() {
     setHandoverLocation('Bhopal');
   };
 
+  const handleVerifyOtpHandover = async (lotId: number, otp: string, scaleWeight: number) => {
+    const res = await fetch(`${API_BASE_URL}/api/handovers/${lotId}/verify-otp`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        otp_code: otp,
+        scale_weight_kg: scaleWeight,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to verify handover OTP' }));
+      throw new Error(err.detail || 'OTP verification failed');
+    }
+    const handover = await res.json();
+    setHandoverRecords((current) => [handover, ...current]);
+    await refreshData();
+    await refreshAdminData();
+  };
+
   const completePayment = async (lotId: number) => {
     if (actionSubmitting) return;
     setActionSubmitting(true);
@@ -1680,6 +1699,7 @@ export function App() {
           lots={lots}
           materials={materials}
           confirmHandover={confirmHandover}
+          onVerifyOtpHandover={handleVerifyOtpHandover}
         />
 
         <TraceabilityModal

@@ -67,6 +67,9 @@ class Lot(Base):
     photo_url = Column(String(255), nullable=True)
     quantity_kg = Column(Float, nullable=False, default=0.0)
     estimated_value = Column(Float, nullable=False, default=0.0)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    pickup_address = Column(String(255), nullable=True)
     status = Column(String(30), nullable=False, default="draft")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -89,6 +92,9 @@ class Recycler(Base):
     offered_rate = Column(Text, nullable=True)
     pickup_availability = Column(String(20), default="Yes")
     service_area = Column(String(255), nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    capacity_kg_per_day = Column(Float, nullable=False, default=1000.0)
 
     offers = relationship("Offer", back_populates="recycler", cascade="all, delete-orphan")
     handovers = relationship("Handover", back_populates="recycler", cascade="all, delete-orphan")
@@ -125,6 +131,8 @@ class Handover(Base):
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     photo_url = Column(String(255), nullable=True)
+    otp_code = Column(String(6), nullable=True)
+    otp_expires_at = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(30), nullable=False, default="confirmed")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

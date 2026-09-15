@@ -8,7 +8,7 @@ from app.ai_service import estimate_price
 from app.auth import get_optional_current_user, require_role
 from app.config import settings
 from app.database import get_db
-from app.models import DocumentAuditLog, DocumentType, Handover, Lot, Material, Offer, OrganizationDocument, Recycler, ResolvedAnomaly, User
+from app.models import DocumentAuditLog, DocumentType, Handover, Lot, Material, Offer, OrganizationDocument, Payment, Recycler, ResolvedAnomaly, User
 from app.schemas import (
     AdminAnomalyOut,
     AdminMetricsOut,
@@ -45,9 +45,9 @@ def compute_admin_anomalies(db: Session) -> list[AdminAnomalyOut]:
         if lot and lot.quantity_kg > 0:
             diff = abs(lot.quantity_kg - h.final_weight_kg)
             pct = (diff / lot.quantity_kg) * 100.0
-            if pct > 10.0 and diff >= 0.3:
+            if pct > 5.0 and diff >= 0.2:
                 aid = f"ANOM-WT-{h.id}"
-                severity = "high" if pct > 25.0 else "medium"
+                severity = "high" if pct > 20.0 else "medium"
                 status_str = "resolved" if aid in resolved_ids else "open"
                 anomalies.append(AdminAnomalyOut(
                     id=aid,
@@ -359,6 +359,7 @@ def run_demo_workflow(db: Session = Depends(get_db)):
     db.refresh(offer)
 
     verified_scale_weight = 14.2
+    discrepancy = round(abs(demo_weight - verified_scale_weight) / demo_weight * 100.0, 2)
     handover = Handover(
         lot_id=lot.id,
         collector_id=1,
@@ -368,6 +369,7 @@ def run_demo_workflow(db: Session = Depends(get_db)):
         collector_confirmed=True,
         recycler_confirmed=True,
         signature=f"SIG-SIH-DEMO-{lot.id}-CPCB",
+        otp_code="789123",
         status="confirmed",
     )
     db.add(handover)
@@ -375,6 +377,19 @@ def run_demo_workflow(db: Session = Depends(get_db)):
     db.commit()
     db.refresh(handover)
 
+    # Record Cash-First Payment Settlement
+    payment = Payment(
+        payment_reference=f"REV-PAY-2026-{lot.id:04d}-DEMO",
+        lot_id=lot.id,
+        collector_id=lot.collector_id,
+        recycler_id=recycler.id,
+        amount=offer_amount,
+        payment_method="CASH",
+        payment_status="COMPLETED",
+        cash_received_confirmed=True,
+        notes="Settled in cash upon OTP handover verification",
+    )
+    db.add(payment)
     lot.status = "payment_completed"
     db.commit()
     db.refresh(lot)

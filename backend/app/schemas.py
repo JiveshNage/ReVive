@@ -10,10 +10,13 @@ class MaterialOut(BaseModel):
 
 
 class LotCreate(BaseModel):
-    collector_id: int = Field(..., ge=1)
+    collector_id: int | None = Field(None, ge=1)
     material_id: int = Field(..., ge=1)
     quantity_kg: float = Field(..., gt=0)
     photo_url: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    pickup_address: str | None = None
 
 
 class LotOut(BaseModel):
@@ -23,6 +26,9 @@ class LotOut(BaseModel):
     photo_url: str | None = None
     quantity_kg: float
     estimated_value: float
+    latitude: float | None = None
+    longitude: float | None = None
+    pickup_address: str | None = None
     status: str
     lot_reference: str | None = None
 
@@ -55,6 +61,18 @@ class HandoverCreate(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     photo_url: str | None = None
+    otp_code: str | None = Field(None, min_length=4, max_length=8)
+
+
+class HandoverOtpGenerateRequest(BaseModel):
+    lot_id: int = Field(..., ge=1)
+
+
+class HandoverOtpVerifyRequest(BaseModel):
+    otp_code: str = Field(..., min_length=4, max_length=8)
+    scale_weight_kg: float = Field(..., gt=0)
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class HandoverOut(BaseModel):
@@ -72,7 +90,10 @@ class HandoverOut(BaseModel):
     longitude: float | None = None
     photo_url: str | None = None
     handover_reference: str | None = None
+    otp_code: str | None = None
+    otp_expires_at: str | None = None
     discrepancy_flagged: bool = False
+    discrepancy_pct: float | None = None
 
 
 class RecyclerOut(BaseModel):
@@ -135,7 +156,15 @@ class RecyclerMatchOut(BaseModel):
     rate: str | None = None
     pickup_availability: str
     service_area: str
+    latitude: float | None = None
+    longitude: float | None = None
+    distance_km: float | None = None
     score: int
+    material_compatibility_score: int = 40
+    rate_score: int = 25
+    proximity_score: int = 15
+    pickup_capacity_score: int = 10
+    compliance_score: int = 10
 
 
 class PredictionTopItem(BaseModel):
@@ -428,7 +457,7 @@ class FirebaseVerifyRequest(BaseModel):
 
 
 class PaymentCreate(BaseModel):
-    lot_id: int = Field(..., ge=1)
+    lot_id: int | None = Field(None, ge=1)
     handover_id: int | None = None
     amount: float = Field(..., gt=0)
     payment_method: str = Field(default="CASH")  # CASH or UPI

@@ -75,6 +75,9 @@ def ensure_db_initialized() -> None:
                     ("offered_rate", "TEXT"),
                     ("pickup_availability", "VARCHAR(20) DEFAULT 'Yes'"),
                     ("service_area", "VARCHAR(255)"),
+                    ("latitude", "FLOAT"),
+                    ("longitude", "FLOAT"),
+                    ("capacity_kg_per_day", "FLOAT DEFAULT 1000.0"),
                 ]
                 for col_name, col_type in rec_cols:
                     if col_name not in existing_rec_cols:
@@ -83,8 +86,15 @@ def ensure_db_initialized() -> None:
                 # 3. lots migrations
                 lot_res = conn.exec_driver_sql("PRAGMA table_info(lots)").fetchall()
                 existing_lot_cols = {row[1] for row in lot_res}
-                if "lot_reference" not in existing_lot_cols:
-                    conn.exec_driver_sql("ALTER TABLE lots ADD COLUMN lot_reference VARCHAR(50)")
+                lot_cols = [
+                    ("lot_reference", "VARCHAR(50)"),
+                    ("latitude", "FLOAT"),
+                    ("longitude", "FLOAT"),
+                    ("pickup_address", "VARCHAR(255)"),
+                ]
+                for col_name, col_type in lot_cols:
+                    if col_name not in existing_lot_cols:
+                        conn.exec_driver_sql(f"ALTER TABLE lots ADD COLUMN {col_name} {col_type}")
 
                 # 4. handover_records migrations
                 hnd_res = conn.exec_driver_sql("PRAGMA table_info(handover_records)").fetchall()
@@ -94,6 +104,8 @@ def ensure_db_initialized() -> None:
                     ("latitude", "FLOAT"),
                     ("longitude", "FLOAT"),
                     ("photo_url", "VARCHAR(255)"),
+                    ("otp_code", "VARCHAR(6)"),
+                    ("otp_expires_at", "TIMESTAMP"),
                 ]
                 for col_name, col_type in hnd_cols:
                     if col_name not in existing_hnd_cols:

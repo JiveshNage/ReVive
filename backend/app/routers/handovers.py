@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+import random
 import secrets
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, update
@@ -7,11 +9,179 @@ from app.auth import get_current_user, get_optional_current_user
 from app.config import settings
 from app.database import get_db
 from app.dependencies import verify_owner_or_admin
-from app.models import Handover, Lot, User
+from app.models import CollectorReputation, Handover, Lot, Offer, User
 from app.passport_service import generate_handover_reference
-from app.schemas import HandoverCreate, HandoverOut
+from app.schemas import HandoverCreate, HandoverOtpGenerateRequest, HandoverOtpVerifyRequest, HandoverOut
 
 router = APIRouter(prefix=settings.api_v1_prefix, tags=["Handovers"])
+
+
+@router.post("/handovers/generate-otp")
+def generate_handover_otp(
+    payload: HandoverOtpGenerateRequest | None = None,
+    lot_id: int | None = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Generates a secure 6-digit time-limited OTP (valid for 15 minutes) for the collector.
+    Presented to the authorized recycler at the physical scale.
+    """
+    effective_lot_id = payload.lot_id if payload else lot_id
+    if not effective_lot_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="lot_id must be provided.")
+
+    lot = db.get(Lot, effective_lot_id)
+    if not lot:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scrap lot not found.")
+
+    if current_user.role != "admin" and current_user.id != lot.collector_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the lot owner or an administrator can generate a handover OTP.",
+        )
+
+    # 6-digit numeric OTP
+    otp = f"{random.randint(100000, 999999)}"
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+    handover = db.execute(
+        select(Handover).where(Handover.lot_id == effective_lot_id)
+    ).scalar_one_or_none()
+
+    if not handover:
+        # Check for accepted offer to retrieve recycler_id
+        accepted_offer = db.execute(
+            select(Offer).where(Offer.lot_id == effective_lot_id, Offer.status == "accepted")
+        ).scalars().first()
+        recycler_id = accepted_offer.recycler_id if accepted_offer else 1
+
+        handover = Handover(
+            lot_id=lot.id,
+            collector_id=lot.collector_id,
+            recycler_id=recycler_id,
+            final_weight_kg=lot.quantity_kg,
+            handover_location=lot.pickup_address or "Collector Premises",
+            collector_confirmed=True,
+            recycler_confirmed=False,
+            otp_code=otp,
+            otp_expires_at=expires_at,
+            status="pending",
+        )
+        db.add(handover)
+    else:
+        handover.otp_code = otp
+        handover.otp_expires_at = expires_at
+        handover.status = "pending"
+
+    lot.status = "pickup"
+    db.commit()
+    db.refresh(handover)
+
+    return {
+        "lot_id": lot.id,
+        "otp_code": otp,
+        "expires_at": expires_at.isoformat(),
+        "valid_duration_minutes": 15,
+        "collector_id": lot.collector_id,
+        "message": "Present this 6-digit OTP to the authorized recycler at physical scale weighment.",
+    }
+
+
+@router.post("/handovers/{lot_id}/verify-otp", response_model=HandoverOut)
+def verify_handover_otp(
+    lot_id: int,
+    payload: HandoverOtpVerifyRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Recycler enters collector's 6-digit OTP and final scale weight.
+    Enforces +-5% weight discrepancy tolerance.
+    Flags anomaly to /api/admin/anomalies if discrepancy > 5%.
+    """
+    lot = db.get(Lot, lot_id)
+    if not lot:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lot not found.")
+
+    handover = db.execute(
+        select(Handover).where(Handover.lot_id == lot_id)
+    ).scalar_one_or_none()
+
+    if not handover or not handover.otp_code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No active handover OTP found for this lot. Collector must generate an OTP first.",
+        )
+
+    # Check OTP expiry
+    now = datetime.now(timezone.utc)
+    if handover.otp_expires_at:
+        exp = handover.otp_expires_at
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if now > exp:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Handover OTP has expired (15 minute validity). Please request a fresh OTP.",
+            )
+
+    # Validate OTP code match
+    if str(handover.otp_code).strip() != str(payload.otp_code).strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid handover OTP code. Please verify with the collector.",
+        )
+
+    # Weight discrepancy calculation (+- 5% tolerance as per SIH26229 spec)
+    diff_kg = abs(lot.quantity_kg - payload.scale_weight_kg)
+    diff_pct = (diff_kg / lot.quantity_kg) * 100.0 if lot.quantity_kg > 0 else 0.0
+    discrepancy_flagged = diff_pct > 5.0
+
+    handover.final_weight_kg = payload.scale_weight_kg
+    handover.collector_confirmed = True
+    handover.recycler_confirmed = True
+    handover.latitude = payload.latitude or handover.latitude
+    handover.longitude = payload.longitude or handover.longitude
+    handover.status = "confirmed"
+    handover.signature = f"OTP-SIG-{lot.id}-{secrets.token_hex(4).upper()}"
+    if not handover.handover_reference:
+        handover.handover_reference = generate_handover_reference(handover.id)
+
+    lot.status = "handed_over"
+
+    # Update collector reputation accuracy
+    reputation = db.execute(
+        select(CollectorReputation).where(CollectorReputation.collector_id == lot.collector_id)
+    ).scalars().first()
+    if reputation:
+        accuracy = max(50.0, 100.0 - diff_pct)
+        reputation.weight_accuracy_pct = round((reputation.weight_accuracy_pct * 0.7) + (accuracy * 0.3), 1)
+        reputation.updated_at = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(handover)
+
+    return HandoverOut(
+        id=handover.id,
+        lot_id=handover.lot_id,
+        collector_id=handover.collector_id,
+        recycler_id=handover.recycler_id,
+        final_weight_kg=handover.final_weight_kg,
+        handover_location=handover.handover_location,
+        collector_confirmed=handover.collector_confirmed,
+        recycler_confirmed=handover.recycler_confirmed,
+        signature=handover.signature,
+        status=handover.status,
+        latitude=handover.latitude,
+        longitude=handover.longitude,
+        photo_url=handover.photo_url,
+        handover_reference=handover.handover_reference,
+        otp_code=handover.otp_code,
+        otp_expires_at=handover.otp_expires_at.isoformat() if handover.otp_expires_at else None,
+        discrepancy_flagged=discrepancy_flagged,
+        discrepancy_pct=round(diff_pct, 1),
+    )
 
 
 @router.post("/handover", response_model=HandoverOut)
@@ -55,11 +225,13 @@ def create_handover(
             detail="Handover already exists for this lot",
         )
 
-    # Discrepancy detection: > 10% variance between collector initial estimate and physical scale
+    # Discrepancy detection: > 5% variance between collector initial estimate and physical scale
     discrepancy_flagged = False
+    diff_pct = 0.0
     if lot.quantity_kg > 0:
         diff_ratio = abs(lot.quantity_kg - payload.final_weight_kg) / lot.quantity_kg
-        if diff_ratio > 0.10:
+        diff_pct = diff_ratio * 100.0
+        if diff_pct > 5.0:
             discrepancy_flagged = True
 
     signature_token = payload.signature or f"SIG-REV-{payload.lot_id}-{secrets.token_hex(6).upper()}"
@@ -77,6 +249,7 @@ def create_handover(
         latitude=payload.latitude,
         longitude=payload.longitude,
         photo_url=payload.photo_url,
+        otp_code=payload.otp_code,
         status=status_value,
     )
     db.add(handover)
@@ -105,7 +278,10 @@ def create_handover(
         longitude=handover.longitude,
         photo_url=handover.photo_url,
         handover_reference=handover.handover_reference,
+        otp_code=handover.otp_code,
+        otp_expires_at=handover.otp_expires_at.isoformat() if handover.otp_expires_at else None,
         discrepancy_flagged=discrepancy_flagged,
+        discrepancy_pct=round(diff_pct, 1),
     )
     return out
 
@@ -134,6 +310,10 @@ def list_handover(
             "recycler_confirmed": h.recycler_confirmed,
             "signature": h.signature,
             "status": h.status,
+            "latitude": h.latitude,
+            "longitude": h.longitude,
+            "otp_code": h.otp_code,
+            "handover_reference": h.handover_reference,
         }
         for h in handovers
     ]

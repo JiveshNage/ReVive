@@ -39,3 +39,6 @@ pubspec.lock
 
 # Docker
 *.local
+
+# Uploads & Temp Media
+uploads/

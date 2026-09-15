@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = 10
     upload_dir: str = str(BASE_DIR / "uploads")
 
+    # Cloudinary Image Pipeline Configuration (Optional for cloud CDN)
+    cloudinary_cloud_name: str = ""
+    cloudinary_api_key: str = ""
+    cloudinary_api_secret: str = ""
+
     model_config = SettingsConfigDict(
         env_file=(str(BASE_DIR / ".env"), str(BASE_DIR.parent / ".env")),
         env_file_encoding="utf-8",

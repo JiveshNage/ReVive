@@ -437,11 +437,26 @@ export const FindRecyclerPage: React.FC<FindRecyclerPageProps> = ({
                       <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
                         {rec.recycler_name}
                       </h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b', flexWrap: 'wrap' }}>
                         <span>📍</span>
                         <span>{rec.location}</span>
                         <span>·</span>
                         <span style={{ color: '#059669', fontWeight: 600 }}>{rec.service_area}</span>
+                        {rec.distance_km !== undefined && rec.distance_km !== null && (
+                          <span style={{ background: '#fef3c7', color: '#92400e', padding: '1px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>
+                            {rec.distance_km < 15 ? `${rec.distance_km} km (Nearby)` : `${rec.distance_km} km`}
+                          </span>
+                        )}
+                        {rec.latitude && rec.longitude && (
+                          <a
+                            href={`https://www.openstreetmap.org/?mlat=${rec.latitude}&mlon=${rec.longitude}#map=14/${rec.latitude}/${rec.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600, fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+                          >
+                            🗺️ Map
+                          </a>
+                        )}
                       </div>
                     </div>
 
@@ -460,10 +475,40 @@ export const FindRecyclerPage: React.FC<FindRecyclerPageProps> = ({
                         alignItems: 'center',
                         gap: '4px',
                       }}
-                      title="AI Location & Material Compatibility Score"
+                      title="Formula: Material (40%) + Rate (25%) + Distance (15%) + Capacity (10%) + Compliance (10%)"
                     >
                       <span>★</span>
                       <span>{rec.score}% Match</span>
+                    </div>
+                  </div>
+
+                  {/* 5-Criteria Matching Pillar Breakdown */}
+                  <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '8px', marginBottom: '12px', fontSize: '11px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', fontWeight: 700, marginBottom: '4px' }}>
+                      <span>🎯 {currentLang === 'hi' ? 'एआई मिलान कारक:' : 'Matching Pillars:'}</span>
+                      <span>{rec.score}/100</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', textAlign: 'center', fontSize: '10px' }}>
+                      <div style={{ background: '#ecfdf5', padding: '3px 2px', borderRadius: '4px', color: '#065f46' }}>
+                        <div style={{ fontWeight: 800 }}>{rec.material_compatibility_score ?? 40}/40</div>
+                        <div>Material</div>
+                      </div>
+                      <div style={{ background: '#eff6ff', padding: '3px 2px', borderRadius: '4px', color: '#1e40af' }}>
+                        <div style={{ fontWeight: 800 }}>{rec.rate_score ?? 25}/25</div>
+                        <div>Rate</div>
+                      </div>
+                      <div style={{ background: '#fef3c7', padding: '3px 2px', borderRadius: '4px', color: '#92400e' }}>
+                        <div style={{ fontWeight: 800 }}>{rec.proximity_score ?? 15}/15</div>
+                        <div>Proximity</div>
+                      </div>
+                      <div style={{ background: '#f5f3ff', padding: '3px 2px', borderRadius: '4px', color: '#5b21b6' }}>
+                        <div style={{ fontWeight: 800 }}>{rec.pickup_capacity_score ?? 10}/10</div>
+                        <div>Pickup</div>
+                      </div>
+                      <div style={{ background: '#fdf2f8', padding: '3px 2px', borderRadius: '4px', color: '#9d174d' }}>
+                        <div style={{ fontWeight: 800 }}>{rec.compliance_score ?? 10}/10</div>
+                        <div>CPCB</div>
+                      </div>
                     </div>
                   </div>
 

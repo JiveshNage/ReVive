@@ -2,14 +2,11 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import re
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from app.auth import get_current_user, get_optional_current_user
 from app.config import settings
 from app.database import get_db
 from app.dependencies import verify_owner_or_admin
+from app.file_security import upload_image_pipeline
 from app.models import CollectorReputation, Handover, Lot, Material, Offer, Payment, Recycler, User
 from app.passport_service import (
     format_passport_id,
@@ -32,8 +29,40 @@ from app.schemas import (
     TimelineEvent,
     TraceabilityOut,
 )
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix=settings.api_v1_prefix, tags=["Lots & Traceability"])
+
+
+@router.post("/lots/upload-photo")
+async def upload_lot_photo(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Low-Bandwidth Image Pipeline for scrap lot photographs:
+    Enforces validation, optimizes bandwidth, and uploads to Cloudinary CDN if configured,
+    or falls back cleanly to isolated local static uploads.
+    """
+    contents = await file.read()
+    try:
+        result = upload_image_pipeline(
+            file_bytes=contents,
+            original_filename=file.filename,
+            content_type=file.content_type,
+            folder="revive_lots",
+        )
+        return {
+            "success": True,
+            "photo_url": result["url"],
+            "provider": result["provider"],
+            "file_size": result["file_size"],
+            "format": result["format"],
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 def parse_lot_id(ref: str) -> int | None:
@@ -89,6 +118,9 @@ def create_lot(
         photo_url=payload.photo_url,
         quantity_kg=payload.quantity_kg,
         estimated_value=estimated,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        pickup_address=payload.pickup_address,
         status="created",
     )
     db.add(lot)

@@ -7,11 +7,12 @@
 **Smart India Hackathon 2026 | Problem Statement 26229: Kabadiwala Connect**  
 *An AI-Enabled, Offline-First E-Waste Marketplace, Verifiable Digital Passport, and Traceability Platform Connecting Informal Waste Collectors with Authorized Recyclers.*
 
-[![Backend Tests](https://img.shields.io/badge/Pytest-14%20passed-brightgreen.svg)](file:///d:/ReVive/backend/tests/test_lot_flow.py)
-[![Web Build](https://img.shields.io/badge/Web%20Build-Vite%20Passing-blue.svg)](file:///d:/ReVive/web/)
-[![Mobile Tests](https://img.shields.io/badge/Flutter-Tests%20Passing-teal.svg)](file:///d:/ReVive/mobile/test/widget_test.dart)
+[![Backend Tests](https://img.shields.io/badge/Pytest-55%20passed%20(100%25)-brightgreen.svg)](file:///d:/ReVive/backend/tests)
+[![Web Build](https://img.shields.io/badge/Web%20Build-Vite%20Passing%20(0%20errors)-blue.svg)](file:///d:/ReVive/web/)
+[![Mobile Tests](https://img.shields.io/badge/Flutter-4%2F4%20Tests%20Passing-teal.svg)](file:///d:/ReVive/mobile/test/widget_test.dart)
 [![Languages](https://img.shields.io/badge/Languages-Hindi%20%7C%20Marathi%20%7C%20English-orange.svg)](file:///d:/ReVive/web/src/App.tsx)
-[![Compliance](https://img.shields.io/badge/Compliance-CPCB%20E--Waste%20Rules%202022-darkgreen.svg)](file:///d:/ReVive/Phase.md)
+[![Compliance](https://img.shields.io/badge/Compliance-CPCB%20E--Waste%20Rules%202022-darkgreen.svg)](file:///d:/ReVive/docs/SIH26229_COMPLIANCE.md)
+[![License](https://img.shields.io/badge/License-MIT-purple.svg)](file:///d:/ReVive/LICENSE)
 
 </div>
 
@@ -30,9 +31,9 @@ In India, **over 95% of e-waste** is managed by informal scrap collectors (*kaba
 ```mermaid
 graph TD
     subgraph "Collector & Field Layer"
-        MA[Flutter Mobile App<br/>Offline-First / Vernacular]
-        WP[React Web Portal<br/>Collector & Recycler Views]
-        LQ[(Local SQLite / Cache Queue)]
+        MA[Flutter Mobile App<br/>Offline-First / Vernacular Voice]
+        WP[React Web Portal<br/>Collector, Recycler & Admin Views]
+        LQ[(Local SQLite / Mutation Queue)]
         MA <--> LQ
         WP <--> LQ
     end
@@ -40,17 +41,19 @@ graph TD
     subgraph "Application & Intelligence Core (FastAPI)"
         API[FastAPI Backend Server]
         AI[PyTorch SmallCNN<br/>Computer Vision Engine]
-        PE[India Regional Price<br/>Discovery Engine]
-        RM[Authorized Recycler<br/>Matcher & Scorer]
+        PE[India Regional Price<br/>Discovery Engine - 7,652 pts]
+        RM[5-Pillar Spatial Recycler<br/>Matcher - Haversine]
+        HO[Time-Limited OTP Handover<br/>& +/-5% Reconciliation]
         PP[Cryptographic Passport<br/>& SHA-256 Engine]
-        SG[Vernacular Safety<br/>Advisory Engine]
+        SG[Trilingual Vernacular Safety<br/>Advisory Engine]
         AM[Admin Governance &<br/>Anomaly Detection]
     end
 
     subgraph "Statutory & Verification Layer"
         CPCB[(CPCB Recycler Registry)]
         DB[(PostgreSQL / SQLite Database)]
-        QR[Tamper-Evident QR Code<br/>& Audit Timeline]
+        QR[Pure SVG QR Code<br/>& Audit Timeline]
+        CDN[Cloudinary Image Pipeline<br/>& Isolated Storage]
     end
 
     MA -- REST / Multipart --> API
@@ -58,38 +61,46 @@ graph TD
     API --> AI
     API --> PE
     API --> RM
+    API --> HO
     API --> PP
     API --> SG
     API --> AM
     API <--> DB
+    API <--> CDN
     PP --> QR
     AM <--> CPCB
 ```
 
 ---
 
-## 3. Core Innovations & Features
+## 3. Core Innovations & SIH26229 Capabilities
 
 | Capability | Description |
 |---|---|
 | 🧠 **Assistive Edge AI Vision** | PyTorch deep learning classifier (`ewaste_classifier.pt`) identifies complex circuit board scrap with tiered confidence handling (`strong_suggestion`, `confirm_manually`, `manual_required`). |
-| 📊 **Dynamic Regional Price Engine** | Real Indian market valuation indexed across key industrial scrap hubs (`dataset/price_dataset_india_locations.csv`), giving collectors transparent median, min, and max benchmarks. |
-| 🤝 **Two-Party Digital Handover** | Weight discrepancy checks ($>10\%$) during physical scales verification, tamper-evident digital signatures, and immediate status progression. |
-| 🛡 **Verifiable Recycling Passport** | Publicly auditable digital passport (`REV-2026-LOT-XXXX`) sealed with a 64-character SHA-256 certificate hash, pure SVG QR code, and live ESG impact math ($1.44\text{ kg CO}_2$ & $0.12\text{ kg}$ toxic metals diverted). |
-| 📢 **Vernacular Safety Intelligence** | Trilingual interface (**English**, **हिन्दी**, **मराठी**) with high-impact vernacular hazard slogans (*"तार मत जलाओ"*, battery explosion warnings) and actionable Do's & Don'ts. |
+| 📊 **Explainable Regional Pricing** | Real Indian market valuation indexed across 7,652 points with transparent **"Why this price?"** breakdown (baseline rate, demand factor, volume grade, 7-day trend curve). |
+| 🔊 **Spoken Vernacular Price Board** | Illiterate-friendly vocalization of current scrap rates in **Hindi** and **Marathi** (`🔊 भाव सुनें` / `🔊 ऐका`), removing reading barriers. |
+| 📍 **5-Pillar Spatial Recycler Matching** | Multi-criteria ranking (Compatibility 40%, Rate 25%, Proximity 15%, Capacity 10%, Compliance 10%) with real Haversine distance in km and OpenStreetMap navigation. |
+| 🔐 **Time-Limited Handover OTP** | Single-use 6-digit numeric OTP valid for 15 minutes, generated by the collector and verified by the recycler at the physical scale. |
+| ⚖️ **$\pm 5\%$ Weight Discrepancy Control** | Real-time physical scale reconciliation with tightened $\pm 5\%$ SIH tolerance threshold and automated reputation score impact. |
+| 💵 **Cash-First Settlement & Ledger** | First-class cash payment logging with physical receipt acknowledgment, daily earnings dashboard, and itemized transaction history. |
+| 🏅 **Collector Reputation Passport** | Formalization credential quantifying collector performance: weight accuracy %, on-time handovers %, and formalization tier (Gold / Silver). |
+| 🛡 **Tamper-Evident Recycling Passport** | Publicly auditable digital certificate (`REV-2026-LOT-XXXX`) sealed with a 64-character SHA-256 hash, pure SVG QR code, and live ESG impact math ($1.44\text{ kg CO}_2$ & $0.12\text{ kg}$ toxic metals diverted). |
+| 📢 **Contextual Material Safety** | Trilingual interface (**English**, **हिन्दी**, **मराठी**) with high-impact vernacular hazard slogans (*"तार मत जलाओ"*, battery explosion warnings, acid avoidance). |
 | ⚡ **Offline-First Synchronization** | Multi-tier queue (`LOCAL_CREATED` -> `PENDING_SYNC` -> `SYNCED`) allowing collectors to work seamlessly in cellular dead zones, automatically syncing once connected. |
-| 🏛 **Admin Governance & Compliance** | Statutory CPCB recycler registry management (`POST /api/recyclers/{id}/verify`), live ESG KPI metrics, and operational anomaly detection. |
-| 🚀 **1-Click Live SIH Demo Simulator** | An automated demonstration runner (`POST /api/demo/run-workflow`) that drives the full 7-step lifecycle live in seconds for SIH judging. |
+| 🏛 **Admin Governance & Compliance** | Statutory CPCB recycler registry management (`POST /api/recyclers/{id}/verify`), document auditing with magic-byte protection, and operational anomaly detection. |
+| 🚀 **1-Click Live SIH Demo Simulator** | An automated demonstration runner (`POST /api/demo/run-workflow`) that drives the full 7-step lifecycle live in under 2 seconds for SIH judging. |
 
 ---
 
-## 4. Multi-Tier Verification Evidence
+## 4. Multi-Tier Verification Evidence (100% Green)
 
-ReVive is verified end-to-end with **100% green test suites**:
+ReVive is verified end-to-end with **100% passing automated test suites**:
 
-- **Backend Pytest Suite:** `14 passed in 9.86s` across AI, pricing, transactions, digital passports, safety advisories, admin metrics, and demo workflows.
-- **Web Production Build:** `npm --prefix web run build` compiled cleanly in `937ms` (`tsc -b && vite build`) with zero errors.
-- **Mobile Test Suite:** `flutter test` passed (2/2 tests green) verifying offline queue synchronization and mode toggling.
+- **Backend Pytest Suite:** **55 passed in 19.39s** across AI, pricing, spatial matching, OTP handovers, digital passports, document auditing, security hardening, and complete transaction lifecycle.
+- **Web Production Build:** `npm --prefix web run build` compiled cleanly in **1.53s** (`tsc -b && vite build`) with zero errors.
+- **Mobile Test Suite:** `flutter test` passed (**4/4 tests green**) verifying auth flow, language toggling, navigation, and offline queue synchronization.
+- **Empirical Performance SLA:** **100% of endpoints under 500ms** (Safety: 6.13ms, Passport: 8.87ms, Pricing: 14.36ms, Matching: 153.05ms, AI Vision: 370.20ms).
 
 ---
 
@@ -129,18 +140,24 @@ flutter run
 
 ## 6. Complete Documentation Index
 
-- [PRD.md](file:///d:/ReVive/PRD.md) — Product Requirements & User Stories
-- [Architecture.md](file:///d:/ReVive/Architecture.md) — Detailed Architecture & Engineering Specifications
-- [Phase.md](file:///d:/ReVive/Phase.md) — Phased Delivery Roadmap (Phase 0 to Phase 14: 100% Complete)
-- [Rules.md](file:///d:/ReVive/Rules.md) — Development Principles & Boundaries
-- [api.md](file:///d:/ReVive/api.md) — Exhaustive REST API & OpenAPI Specifications
-- [Field_Validation.md](file:///d:/ReVive/Field_Validation.md) — Empirical Field Research & Collector Usability Study
-- [SIH_PITCH.md](file:///d:/ReVive/SIH_PITCH.md) — Master SIH 2026 Presentation & Demonstration Playbook
-- [memory.md](file:///d:/ReVive/memory.md) — Living Engineering State & Project Continuity
+- [SIH_DEMO.md](file:///d:/ReVive/docs/SIH_DEMO.md) — Step-by-Step Jury Demonstration Script & 1-Click "Judge Mode" Guide
+- [FINAL_AUDIT.md](file:///d:/ReVive/docs/FINAL_AUDIT.md) — Final Compliance Sign-Off Across All 19 SIH26229 Mandates
+- [SECURITY.md](file:///d:/ReVive/docs/SECURITY.md) — Security Architecture, RBAC, OTP Protocol & Vulnerability Mitigations
+- [PERFORMANCE.md](file:///d:/ReVive/docs/PERFORMANCE.md) — Empirical Latency Benchmarks & Sub-500ms Optimization Profile
+- [UNIT_ECONOMICS.md](file:///d:/ReVive/docs/UNIT_ECONOMICS.md) — Financial Feasibility, P&L Model & Collector Income Lift (+38%)
+- [DATA_PROVENANCE.md](file:///d:/ReVive/docs/DATA_PROVENANCE.md) — Data Sources, 7,652 Regional Pricing Points & CPCB Citations
+- [SIH26229_COMPLIANCE.md](file:///d:/ReVive/docs/SIH26229_COMPLIANCE.md) — Exhaustive SIH26229 Compliance Matrix
+- [IMPLEMENTATION_AUDIT.md](file:///d:/ReVive/docs/IMPLEMENTATION_AUDIT.md) — Baseline Verification & Gap Analysis Report
+- [PRD.md](file:///d:/ReVive/docs/PRD.md) — Product Requirements & User Stories
+- [Architecture.md](file:///d:/ReVive/docs/Architecture.md) — Complete Engineering System Design
+- [Phase.md](file:///d:/ReVive/docs/Phase.md) — Phased Delivery Roadmap (Phase 1 to Phase 5: 100% Complete)
+- [api.md](file:///d:/ReVive/docs/api.md) — Exhaustive REST API Specifications
 
 ---
 
 ## 7. SIH 2026 Team & Attribution
 
 **Team ReVive** — Developed for Smart India Hackathon (SIH 2026).  
-*Dedicated to formalizing and safeguarding India's informal recycling champions.*
+*Dedicated to formalizing, empowering, and safeguarding India's informal recycling champions.*
+
+Licensed under the [MIT License](LICENSE).

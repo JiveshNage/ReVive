@@ -1,10 +1,12 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -140,6 +142,11 @@ app.include_router(handovers.router)
 app.include_router(documents.router)
 app.include_router(admin.router)
 app.include_router(ai.router)
+
+# Mount local uploads directory for low-bandwidth image pipeline delivery
+uploads_dir = Path(settings.upload_dir).resolve()
+uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 
 # Root and Health Check Endpoints

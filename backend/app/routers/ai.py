@@ -235,6 +235,13 @@ def get_recycler_matches(
     limit: int = 12,
     query: str | None = None,
     pickup_only: bool = False,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    weight_compatibility: float = 0.40,
+    weight_rate: float = 0.25,
+    weight_proximity: float = 0.15,
+    weight_capacity: float = 0.10,
+    weight_compliance: float = 0.10,
 ):
     return match_recyclers(
         category=category,
@@ -242,6 +249,13 @@ def get_recycler_matches(
         limit=limit,
         query=query,
         pickup_only=pickup_only,
+        latitude=latitude,
+        longitude=longitude,
+        weight_compatibility=weight_compatibility,
+        weight_rate=weight_rate,
+        weight_proximity=weight_proximity,
+        weight_capacity=weight_capacity,
+        weight_compliance=weight_compliance,
     )
 
 
