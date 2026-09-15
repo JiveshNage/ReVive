@@ -109,6 +109,36 @@ class ApiClient {
     }
   }
 
+  /// Exchange a Firebase Auth ID Token for a ReVive session JWT
+  Future<Map<String, dynamic>> verifyFirebaseAuth(String idToken) async {
+    final url = Uri.parse('$baseUrl/auth/firebase/verify');
+    final response = await httpClient.post(
+      url,
+      headers: _headers(),
+      body: jsonEncode({'id_token': idToken}),
+    );
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final token = data['access_token'] as String?;
+      if (token != null) {
+        await saveToken(token);
+      }
+      if (data['user'] != null) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(userKey, jsonEncode(data['user']));
+        } catch (_) {}
+      }
+      return data;
+    } else {
+      throw Exception(
+        'Firebase token exchange failed (${response.statusCode}): ${response.body}',
+      );
+    }
+  }
+
+
   /// Fetch currently authenticated user profile
   Future<Map<String, dynamic>?> getCurrentUser() async {
     final token = await getToken();

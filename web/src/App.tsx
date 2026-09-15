@@ -27,6 +27,7 @@ import { LandingPage } from './pages/LandingPage';
 import { Navbar } from './components/Navbar';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
+import { loginWithFirebaseGoogle } from './firebase';
 
 import { OfferModal } from './components/modals/OfferModal';
 import { HandoverModal } from './components/modals/HandoverModal';
@@ -1179,6 +1180,51 @@ export function App() {
     }
   };
 
+  const handleFirebaseGoogleLogin = async () => {
+    setAuthLoading(true);
+    setAuthMsg('');
+    try {
+      const data = await loginWithFirebaseGoogle();
+      const u = data.user as any;
+      const fallbackId = authRole === 'collector' ? 101 : authRole === 'recycler' ? 201 : 301;
+      const resolvedId = u?.id || fallbackId;
+      const resolvedRole = (u?.role || authRole || 'collector') as 'collector' | 'recycler' | 'admin';
+      const userObj: UserProfile = {
+        id: resolvedId,
+        custom_user_id:
+          u?.custom_user_id ||
+          (resolvedRole === 'collector'
+            ? `REV-COL-2026-${String(resolvedId).padStart(4, '0')}`
+            : resolvedRole === 'recycler'
+            ? `REV-REC-2026-${String(resolvedId).padStart(4, '0')}`
+            : `CPCB-GOV-2026-${String(resolvedId).padStart(4, '0')}`),
+        name: u?.name || 'Firebase User',
+        phone: u?.phone || (authMethod === 'mobile' ? loginPhone.trim() || '9876543210' : '9876543210'),
+        email: u?.email || (authMethod === 'email' ? loginEmail.trim() || 'collector@revive.gov.in' : undefined),
+        role: resolvedRole,
+        language: (u?.language as Lang) || currentLang,
+        location: u?.location || (resolvedRole === 'recycler' ? 'Pune, Maharashtra' : 'Bhopal, MP'),
+        company_name: u?.company_name || (resolvedRole === 'recycler' ? 'EcoCycle Solutions Pvt Ltd' : undefined),
+        license_no: u?.license_no || (resolvedRole === 'recycler' ? 'CPCB/EW/2024/0981' : undefined),
+        service_area: u?.service_area,
+      };
+      setCurrentUser(userObj);
+      setActiveRole(userObj.role);
+      setCurrentLang(userObj.language);
+      setLandingView('landing');
+      setOnboardingOpen(false);
+      window.localStorage.setItem('revive_user', JSON.stringify(userObj));
+      if (data.access_token) {
+        window.localStorage.setItem('revive_token', data.access_token);
+      }
+    } catch (err: any) {
+      console.error('Firebase login error:', err);
+      alert(err?.message || 'Firebase Google Sign-In failed. Please try again.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const handleCompleteProfile = async () => {
     if (!profileName.trim()) {
       alert('Please enter your full name or company name');
@@ -1354,6 +1400,7 @@ export function App() {
         onSendOtp={handleSendOtp}
         onVerifyOtp={handleVerifyOtp}
         onQuickDemoLogin={handleQuickDemoLogin}
+        onFirebaseLogin={handleFirebaseGoogleLogin}
       />
     );
   }
