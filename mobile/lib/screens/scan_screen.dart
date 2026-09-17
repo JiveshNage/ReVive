@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import '../models/lot.dart';
 import '../services/ai_classifier_service.dart';
 import '../theme/app_colors.dart';
+import '../services/speech_service.dart';
+import '../widgets/accessible_audio_button.dart';
 
 class MaterialCandidate {
   final String category;
@@ -124,9 +126,11 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
 
   @override
   void dispose() {
+    SpeechService().stop();
     _laserController.dispose();
     super.dispose();
   }
+
 
   Future<void> _openCamera() async {
     try {
@@ -245,6 +249,30 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
 
   double get estimatedCashPayout => benchmarkRatePerKg * selectedWeightKg;
 
+  String get _currentNarrationText {
+
+    final isHindi = widget.currentLang == 'hi';
+    final isMarathi = widget.currentLang == 'mr';
+
+    if (hasResult) {
+      if (isHindi) {
+        return 'पहचाना गया मटेरियल: $shortCategory। भाव: ₹${benchmarkRatePerKg.toStringAsFixed(0)} प्रति किलो। कुल वजन: ${selectedWeightKg.toStringAsFixed(1)} किलो। कुल अनुमानित नकद राशि: ₹${estimatedCashPayout.toStringAsFixed(0)}। अब नीचे दिए बटन से लॉट बनाएं।';
+      } else if (isMarathi) {
+        return 'मटेरियल ओळखले: $shortCategory. हमीभाव: ₹${benchmarkRatePerKg.toStringAsFixed(0)} प्रति किलो. एकूण वजन: ${selectedWeightKg.toStringAsFixed(1)} किलो. एकूण अंदाजित रोख रक्कम: ₹${estimatedCashPayout.toStringAsFixed(0)}. आता लॉट तयार करा.';
+      } else {
+        return 'Identified material: $shortCategory. MSP Rate: ₹${benchmarkRatePerKg.toStringAsFixed(0)} per kg. Weight: ${selectedWeightKg.toStringAsFixed(1)} kg. Estimated payout: ₹${estimatedCashPayout.toStringAsFixed(0)}. Tap button to catalogue lot.';
+      }
+    } else {
+      if (isHindi) {
+        return 'कैमरे को ई-कचरे जैसे मदरबोर्ड, तार या बैटरी के सामने रखें और फोटो लें। एआई मटेरियल और भाव बताएगा।';
+      } else if (isMarathi) {
+        return 'कॅमेरा ई-कचऱ्यावर धरा आणि फोटो काढा. एआय मटेरियल आणि हमीभाव ओळखेल.';
+      } else {
+        return 'Point camera at electronic scrap and take a photo. AI will classify the material and calculate your MSP payout.';
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -257,6 +285,14 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         actions: [
+          Center(
+            child: AccessibleAudioButton(
+              textToSpeak: _currentNarrationText,
+              currentLang: widget.currentLang,
+              compact: true,
+            ),
+          ),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.photo_library_rounded, color: Colors.cyanAccent),
             tooltip: 'Upload from Gallery',
@@ -273,6 +309,7 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
           ),
         ],
       ),
+
       body: SafeArea(
         child: Column(
           children: [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/lot.dart';
 import '../models/recycler.dart';
 import '../theme/app_colors.dart';
+import '../services/speech_service.dart';
 
 class RecyclersScreen extends StatefulWidget {
   final String currentLang;
@@ -30,9 +31,11 @@ class _RecyclersScreenState extends State<RecyclersScreen> {
 
   @override
   void dispose() {
+    SpeechService().stop();
     searchController.dispose();
     super.dispose();
   }
+
 
   void _openSendLotSheet(AuthorizedRecycler recycler) {
     showModalBottomSheet(

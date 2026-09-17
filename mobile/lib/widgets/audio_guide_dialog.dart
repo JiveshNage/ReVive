@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../services/audio_service.dart';
+import '../services/speech_service.dart';
 
 class AudioGuideDialog extends StatefulWidget {
   final String currentLang;
@@ -40,41 +41,67 @@ class _AudioGuideDialogState extends State<AudioGuideDialog>
     with SingleTickerProviderStateMixin {
   late String activeSection;
   late String activeLang;
-  bool isPlaying = true;
-  double playbackSpeed = 1.0;
   late AnimationController _waveController;
+  final SpeechService _speech = SpeechService();
 
   @override
   void initState() {
     super.initState();
     activeSection = widget.initialSection;
     activeLang = widget.currentLang;
+
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat();
+    );
+
+    _speech.stateNotifier.addListener(_onSpeechStateChanged);
+
+    // Speak initial section
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _speakCurrentSection();
+    });
+  }
+
+  void _onSpeechStateChanged() {
+    if (!mounted) return;
+    if (_speech.isSpeaking) {
+      if (!_waveController.isAnimating) _waveController.repeat();
+    } else {
+      if (_waveController.isAnimating) _waveController.stop();
+    }
+    setState(() {});
   }
 
   @override
   void dispose() {
+    _speech.stateNotifier.removeListener(_onSpeechStateChanged);
+    _speech.stop();
     _waveController.dispose();
     super.dispose();
   }
 
+  void _speakCurrentSection() {
+    final guide = AudioService.getGuide(activeLang, activeSection);
+    _speech.speak(guide.speechText, lang: activeLang);
+  }
+
   void _togglePlay() {
-    setState(() {
-      isPlaying = !isPlaying;
-      if (isPlaying) {
-        _waveController.repeat();
-      } else {
-        _waveController.stop();
-      }
-    });
+    final state = _speech.currentState;
+    if (state == TtsState.playing) {
+      _speech.pause();
+    } else if (state == TtsState.paused) {
+      _speech.resume();
+    } else {
+      _speakCurrentSection();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final guide = AudioService.getGuide(activeLang, activeSection);
+    final isPlaying = _speech.currentState == TtsState.playing;
+    final isPaused = _speech.currentState == TtsState.paused;
 
     return Container(
       decoration: const BoxDecoration(
@@ -122,7 +149,11 @@ class _AudioGuideDialogState extends State<AudioGuideDialog>
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       Text(
-                        'आवाज में गाइड सुनें · ${activeLang.toUpperCase()}',
+                        activeLang == 'hi'
+                            ? 'आवाज में गाइड सुनें · HINDI'
+                            : (activeLang == 'mr'
+                                ? 'आवाजात मार्गदर्शक ऐका · MARATHI'
+                                : 'Spoken Audio Guide · ENGLISH'),
                         style: const TextStyle(color: Colors.white60, fontSize: 11),
                       ),
                     ],
@@ -171,14 +202,19 @@ class _AudioGuideDialogState extends State<AudioGuideDialog>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      guide.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13.5,
+                    Expanded(
+                      child: Text(
+                        guide.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
@@ -191,15 +227,19 @@ class _AudioGuideDialogState extends State<AudioGuideDialog>
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: isPlaying ? const Color(0xFF34D399) : Colors.grey,
+                              color: isPlaying
+                                  ? const Color(0xFF34D399)
+                                  : (isPaused ? Colors.amber : Colors.grey),
                               shape: BoxShape.circle,
                             ),
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isPlaying ? 'SPEAKING' : 'PAUSED',
+                            isPlaying ? 'SPEAKING' : (isPaused ? 'PAUSED' : 'IDLE'),
                             style: TextStyle(
-                              color: isPlaying ? const Color(0xFF34D399) : Colors.grey,
+                              color: isPlaying
+                                  ? const Color(0xFF34D399)
+                                  : (isPaused ? Colors.amber : Colors.grey),
                               fontSize: 9.5,
                               fontWeight: FontWeight.bold,
                             ),
@@ -270,27 +310,51 @@ class _AudioGuideDialogState extends State<AudioGuideDialog>
               // Speed toggle
               TextButton.icon(
                 onPressed: () {
-                  setState(() {
-                    if (playbackSpeed == 1.0) {
-                      playbackSpeed = 1.2;
-                    } else if (playbackSpeed == 1.2) {
-                      playbackSpeed = 0.8;
-                    } else {
-                      playbackSpeed = 1.0;
-                    }
-                  });
+                  final cur = _speech.speedLevel;
+                  if (cur == TtsSpeedLevel.normal) {
+                    _speech.setSpeedLevel(TtsSpeedLevel.fast);
+                  } else if (cur == TtsSpeedLevel.fast) {
+                    _speech.setSpeedLevel(TtsSpeedLevel.slow);
+                  } else {
+                    _speech.setSpeedLevel(TtsSpeedLevel.normal);
+                  }
+                  setState(() {});
                 },
-                icon: const Icon(Icons.speed_rounded, size: 16, color: Colors.white70),
-                label: Text('${playbackSpeed}x Speed', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                icon: const Icon(Icons.speed_rounded, size: 18, color: Colors.white70),
+                label: Text(
+                  _speech.speedLevel == TtsSpeedLevel.slow
+                      ? '🐢 Slow'
+                      : (_speech.speedLevel == TtsSpeedLevel.fast
+                          ? '🐇 Fast'
+                          : '▶ Normal'),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
               ),
 
               // Play / Pause Button
               ElevatedButton.icon(
                 onPressed: _togglePlay,
-                icon: Icon(isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 20),
-                label: Text(isPlaying ? 'Pause Voice' : 'Play Voice'),
+                icon: Icon(
+                  isPlaying
+                      ? Icons.pause_rounded
+                      : (isPaused ? Icons.play_arrow_rounded : Icons.volume_up_rounded),
+                  size: 20,
+                ),
+                label: Text(
+                  isPlaying
+                      ? (activeLang == 'hi'
+                          ? 'रोकें'
+                          : (activeLang == 'mr' ? 'थांबवा' : 'Pause'))
+                      : (isPaused
+                          ? (activeLang == 'hi'
+                              ? 'जारी रखें'
+                              : (activeLang == 'mr' ? 'सुरू ठेवा' : 'Resume'))
+                          : (activeLang == 'hi'
+                              ? 'सुनें'
+                              : (activeLang == 'mr' ? 'ऐका' : 'Play Voice'))),
+                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF059669),
+                  backgroundColor: isPlaying ? const Color(0xFFDC2626) : const Color(0xFF059669),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -305,6 +369,7 @@ class _AudioGuideDialogState extends State<AudioGuideDialog>
                 onSelected: (code) {
                   setState(() => activeLang = code);
                   widget.onSelectLang?.call(code);
+                  _speakCurrentSection();
                 },
                 itemBuilder: (ctx) => [
                   const PopupMenuItem(value: 'hi', child: Text('हिन्दी (Hindi Voice)')),
@@ -322,7 +387,10 @@ class _AudioGuideDialogState extends State<AudioGuideDialog>
   Widget _topicChip(String label, String key) {
     final isSelected = activeSection == key;
     return GestureDetector(
-      onTap: () => setState(() => activeSection = key),
+      onTap: () {
+        setState(() => activeSection = key);
+        _speakCurrentSection();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(

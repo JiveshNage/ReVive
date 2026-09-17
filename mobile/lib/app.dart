@@ -20,9 +20,15 @@ import 'screens/profile_screen.dart';
 import 'screens/scan_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/lot_tracking_screen.dart';
+import 'screens/launch_splash_screen.dart';
 
 class ReViveApp extends StatelessWidget {
-  const ReViveApp({super.key});
+  final Duration splashDuration;
+
+  const ReViveApp({
+    super.key,
+    this.splashDuration = const Duration(milliseconds: 1400),
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +36,22 @@ class ReViveApp extends StatelessWidget {
       title: 'ReVive Collector Mobile',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const ReViveMainScreen(),
+      home: LaunchSplashScreen(
+        splashDuration: splashDuration,
+        onInitialized: (authenticated) => ReViveMainScreen(initialAuth: authenticated),
+      ),
     );
   }
 }
 
 class ReViveMainScreen extends StatefulWidget {
-  const ReViveMainScreen({super.key});
+  final bool? initialAuth;
+  const ReViveMainScreen({super.key, this.initialAuth});
 
   @override
   State<ReViveMainScreen> createState() => _ReViveMainScreenState();
 }
+
 
 class _ReViveMainScreenState extends State<ReViveMainScreen> {
   // Navigation & Role State (First-time launch defaults to unauthenticated)
@@ -56,8 +67,12 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialAuth != null) {
+      isAuthenticated = widget.initialAuth!;
+    }
     _checkPersistedAuth();
   }
+
 
   Future<void> _checkPersistedAuth() async {
     try {
@@ -392,7 +407,7 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -407,7 +422,7 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('Collector Identity Card')),
+                      appBar: AppBar(title: const Text('Identity Card')),
                       body: ProfileScreen(
                         currentLang: currentLang,
                         onSelectLang: (code) => setState(() => currentLang = code),
@@ -419,7 +434,7 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => Scaffold(
-                                appBar: AppBar(title: const Text('Field Safety Guidance')),
+                                appBar: AppBar(title: const Text('Safety Guidance')),
                                 body: SafetyScreen(
                                   currentLang: currentLang,
                                   onOpenScanner: _openLiveScanner,
@@ -452,75 +467,24 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
 
             // 2. ACTIVE SCREEN CONTENT
             Expanded(
-              child: IndexedStack(
-                index: currentTabIndex,
-                children: [
-                  // Tab 0: Home Dashboard
-                  HomeScreen(
-                    currentLang: currentLang,
-                    lots: lots,
-                    benchmarks: benchmarks,
-                    onOpenScanner: _openLiveScanner,
-                    onNavigatePrices: () => setState(() => currentTabIndex = 1),
-                    onNavigateLots: () => setState(() => currentTabIndex = 2),
-                    onOpenTracking: _openLiveTracking,
-                    onNavigateRecyclers: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => Scaffold(
-                            appBar: AppBar(title: const Text('Authorized Recyclers')),
-                            body: RecyclersScreen(
-                              currentLang: currentLang,
-                              recyclers: recyclers,
-                              lots: lots,
-                              onOpenScanner: _openLiveScanner,
-                              onSendLotToRecycler: _sendLotToRecycler,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    onNavigateSafety: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => Scaffold(
-                            appBar: AppBar(title: const Text('Field Safety Guidance')),
-                            body: SafetyScreen(
-                              currentLang: currentLang,
-                              onOpenScanner: _openLiveScanner,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    onOpenPassport: _openPassportDialog,
-                  ),
-
-                  // Tab 1: Price Board
-                  PriceBoardScreen(
-                    currentLang: currentLang,
-                    benchmarks: benchmarks,
-                    onOpenScanner: _openLiveScanner,
-                  ),
-
-                  // Tab 2: Scrap Lots
-                  LotsScreen(
-                    currentLang: currentLang,
-                    lots: lots,
-                    recyclers: recyclers,
-                    onOpenScanner: _openLiveScanner,
-                    onOpenPassport: _openPassportDialog,
-                    onConfirmHandover: _confirmHandover,
-                    onSendLotToRecycler: _sendLotToRecycler,
-                  ),
-
-                  // Tab 3: Earnings & Financial Ledger
-                  EarningsScreen(
-                    currentLang: currentLang,
-                    lots: lots,
-                    onOpenScanner: _openLiveScanner,
-                  ),
-                ],
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.02, 0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<int>(currentTabIndex),
+                  child: _buildCurrentTab(),
+                ),
               ),
             ),
           ],
@@ -534,5 +498,74 @@ class _ReViveMainScreenState extends State<ReViveMainScreen> {
         onOpenScanner: _openLiveScanner,
       ),
     );
+  }
+
+  Widget _buildCurrentTab() {
+    switch (currentTabIndex) {
+      case 0:
+        return HomeScreen(
+          currentLang: currentLang,
+          lots: lots,
+          benchmarks: benchmarks,
+          onOpenScanner: _openLiveScanner,
+          onNavigatePrices: () => setState(() => currentTabIndex = 1),
+          onNavigateLots: () => setState(() => currentTabIndex = 2),
+          onOpenTracking: _openLiveTracking,
+          onNavigateRecyclers: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(title: const Text('Authorized Recyclers')),
+                  body: RecyclersScreen(
+                    currentLang: currentLang,
+                    recyclers: recyclers,
+                    lots: lots,
+                    onOpenScanner: _openLiveScanner,
+                    onSendLotToRecycler: _sendLotToRecycler,
+                  ),
+                ),
+              ),
+            );
+          },
+          onNavigateSafety: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(title: const Text('Safety Guidance')),
+                  body: SafetyScreen(
+                    currentLang: currentLang,
+                    onOpenScanner: _openLiveScanner,
+                  ),
+                ),
+              ),
+            );
+          },
+          onOpenPassport: _openPassportDialog,
+        );
+      case 1:
+        return PriceBoardScreen(
+          currentLang: currentLang,
+          benchmarks: benchmarks,
+          onOpenScanner: _openLiveScanner,
+        );
+      case 2:
+        return LotsScreen(
+          currentLang: currentLang,
+          lots: lots,
+          recyclers: recyclers,
+          onOpenScanner: _openLiveScanner,
+          onOpenPassport: _openPassportDialog,
+          onConfirmHandover: _confirmHandover,
+          onSendLotToRecycler: _sendLotToRecycler,
+        );
+      case 3:
+        return EarningsScreen(
+          currentLang: currentLang,
+          lots: lots,
+          onOpenScanner: _openLiveScanner,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
   }
 }

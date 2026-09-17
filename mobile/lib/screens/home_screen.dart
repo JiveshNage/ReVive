@@ -45,25 +45,26 @@ class HomeScreen extends StatelessWidget {
         );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. HERO CAMERA SCANNER CARD
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF064E3B), Color(0xFF065F46), Color(0xFF047857)],
+                colors: [Color(0xFF065F46), Color(0xFF059669), Color(0xFF10B981)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x30059669),
-                  blurRadius: 18,
-                  offset: Offset(0, 6),
+                  color: const Color(0xFF10B981).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
@@ -74,61 +75,69 @@ class HomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(35),
-                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(30),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.bolt_rounded, color: Color(0xFFFBBF24), size: 14),
-                          SizedBox(width: 4),
+                          Icon(Icons.auto_awesome, color: Color(0xFFFDE68A), size: 14),
+                          SizedBox(width: 6),
                           Text(
-                            'AI-Assisted Vision MSP',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                            'AI-POWERED VISION',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const Text('📸 Working Camera', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                    const Icon(Icons.qr_code_scanner_rounded, color: Colors.white70, size: 20),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
                 Text(
                   AppStrings.get('scanHeroTitle', currentLang),
                   style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
                     color: Colors.white,
-                    height: 1.25,
+                    height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   AppStrings.get('scanHeroSub', currentLang),
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    color: Color(0xFFD1FAE5),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.8),
                     height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppColors.primaryDark,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 3,
-                    ),
-                    onPressed: onOpenScanner,
-                    icon: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
-                    label: Text(
-                      AppStrings.get('btnScanNow', currentLang),
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5),
-                    ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primaryDark,
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  onPressed: onOpenScanner,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.camera_alt_rounded, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        AppStrings.get('btnScanNow', currentLang),
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -140,20 +149,15 @@ class HomeScreen extends StatelessWidget {
           // 2. LIVE ACTIVE LOT PICKUP TRACKING CARD (IF ANY LOT IS IN TRANSIT)
           if (activeLot != null) ...[
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.cyanAccent.withAlpha(100)),
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withAlpha(38),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
@@ -172,43 +176,36 @@ class HomeScreen extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           const Text(
-                            'LIVE PICKUP EN ROUTE',
+                            'PICKUP EN ROUTE',
                             style: TextStyle(
-                              color: Colors.cyanAccent,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
+                              color: Color(0xFF22D3EE),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
                             ),
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(25),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'LOT #${activeLot.id}',
-                          style: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.bold),
-                        ),
+                      Text(
+                        'ID: #${activeLot.id}',
+                        style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.cyanAccent.withAlpha(38),
-                          borderRadius: BorderRadius.circular(12),
+                          color: const Color(0xFF22D3EE).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(Icons.electric_rickshaw_rounded, color: Colors.cyanAccent, size: 28),
+                        child: const Icon(Icons.electric_moped_rounded, color: Color(0xFF22D3EE), size: 32),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,46 +214,58 @@ class HomeScreen extends StatelessWidget {
                               activeLot.material,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4),
                             Text(
-                              'Driver ${activeLot.driverName} • ${activeLot.vehicleNumber}',
-                              style: const TextStyle(color: Colors.white70, fontSize: 11.5),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'ETA: ~${activeLot.estimatedArrivalMinutes} mins • ${activeLot.remainingDistanceKm} km away',
-                              style: const TextStyle(color: Color(0xFF67E8F9), fontSize: 11, fontWeight: FontWeight.bold),
+                              'Driver: ${activeLot.driverName}',
+                              style: const TextStyle(color: Colors.white70, fontSize: 13),
                             ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => onOpenTracking?.call(activeLot),
-                      icon: const Icon(Icons.location_searching_rounded, size: 16),
-                      label: const Text('Open Live Route Tracking Map'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0284C7),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'ETA: ~${activeLot.estimatedArrivalMinutes} mins',
+                          style: const TextStyle(color: Color(0xFF22D3EE), fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '${activeLot.remainingDistanceKm} km away',
+                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => onOpenTracking?.call(activeLot),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0EA5E9),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('TRACK LIVE LOCATION'),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
           ],
 
           // 3. QUICK ACTION CHIPS
@@ -341,20 +350,21 @@ class HomeScreen extends StatelessWidget {
 
           // Horizontal scrolling rate cards
           SizedBox(
-            height: 90,
+            height: 100,
             child: ListView.separated(
+              physics: const BouncingScrollPhysics(),
               scrollDirection: Axis.horizontal,
               itemCount: benchmarks.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (context, idx) {
                 final b = benchmarks[idx];
                 return Container(
-                  width: 155,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  width: 170,
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.border, width: 1),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,23 +374,30 @@ class HomeScreen extends StatelessWidget {
                         b.category,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Flexible(
                             child: Text(
-                              '₹ ${b.medianRate.toStringAsFixed(0)}/kg',
+                              '₹${b.medianRate.toStringAsFixed(0)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primaryDark),
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primaryDark),
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            b.trend,
-                            style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppColors.primary),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              b.trend,
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.primary),
+                            ),
                           ),
                         ],
                       ),
@@ -427,19 +444,41 @@ class HomeScreen extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
-          boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 2))],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.textPrimary.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            Text(icon, style: const TextStyle(fontSize: 22)),
-            const SizedBox(height: 4),
-            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-            Text(subtitle, style: const TextStyle(fontSize: 9.5, color: AppColors.textMuted)),
+            Text(icon, style: const TextStyle(fontSize: 28)),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textMuted,
+              ),
+            ),
           ],
         ),
       ),
@@ -448,36 +487,37 @@ class HomeScreen extends StatelessWidget {
 
   Widget _lotRowCard(ScrapLot lot) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: const Center(child: Text('📦', style: TextStyle(fontSize: 20))),
+            child: const Center(child: Text('📦', style: TextStyle(fontSize: 24))),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Lot #${lot.id} · ${lot.category}',
-                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   '${lot.quantityKg} kg · ${lot.displayStatus}',
-                  style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -487,17 +527,28 @@ class HomeScreen extends StatelessWidget {
             children: [
               Text(
                 '₹ ${lot.estimatedValue.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.primary),
               ),
+              const SizedBox(height: 4),
               if (lot.status == 'paid')
-                GestureDetector(
-                  onTap: () => onOpenPassport(lot),
-                  child: const Text('Passport 📜', style: TextStyle(fontSize: 11, color: AppColors.accentBlue, fontWeight: FontWeight.bold)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'PASSPORT 📜',
+                    style: TextStyle(fontSize: 9, color: AppColors.primaryDark, fontWeight: FontWeight.w900),
+                  ),
                 )
               else if (lot.status == 'offers' || lot.status == 'pickup')
                 GestureDetector(
                   onTap: () => onOpenTracking?.call(lot),
-                  child: const Text('Live Track 🚛', style: TextStyle(fontSize: 11, color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'LIVE TRACK 🚛',
+                    style: TextStyle(fontSize: 10, color: Color(0xFF0EA5E9), fontWeight: FontWeight.w900),
+                  ),
                 ),
             ],
           ),

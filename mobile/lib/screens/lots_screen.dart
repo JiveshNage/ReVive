@@ -6,6 +6,9 @@ import '../models/recycler.dart';
 import '../theme/app_colors.dart';
 import '../widgets/handover_payment_dialog.dart';
 import 'lot_tracking_screen.dart';
+import '../services/speech_service.dart';
+import '../widgets/accessible_audio_button.dart';
+
 
 class LotsScreen extends StatefulWidget {
   final String currentLang;
@@ -33,6 +36,13 @@ class LotsScreen extends StatefulWidget {
 
 class _LotsScreenState extends State<LotsScreen> {
   String statusFilter = 'all';
+
+  @override
+  void dispose() {
+    SpeechService().stop();
+    super.dispose();
+  }
+
 
   void _openLiveTracking(ScrapLot lot) {
     Navigator.of(context).push(
@@ -309,6 +319,14 @@ class _LotsScreenState extends State<LotsScreen> {
     final bool hasOffer = lot.status == 'offers' || lot.status == 'pickup';
     final bool isUnassigned = lot.recyclerName == null || lot.status == 'created';
 
+    final isHindi = widget.currentLang == 'hi';
+    final isMarathi = widget.currentLang == 'mr';
+    final spokenLot = isHindi
+        ? 'लॉट संख्या ${lot.id}। मटेरियल: ${lot.material}। वजन ${lot.quantityKg} किलो। अनुमानित मूल्य ₹${lot.estimatedValue.toStringAsFixed(0)}। ${lot.recyclerName != null ? 'अधिकृत रिसाइकलर: ${lot.recyclerName}।' : 'अभी तक कोई रिसाइकलर नहीं चुना गया है।'}'
+        : (isMarathi
+            ? 'लॉट क्रमांक ${lot.id}. मटेरियल: ${lot.material}. वजन ${lot.quantityKg} किलो. अंदाजित मूल्य ₹${lot.estimatedValue.toStringAsFixed(0)}. ${lot.recyclerName != null ? 'अधिकृत रिसायकलर: ${lot.recyclerName}.' : 'रिसायकलर निवडलेला नाही.'}'
+            : 'Lot #${lot.id}. Material: ${lot.material}. Weight ${lot.quantityKg} kg. Estimated value ₹${lot.estimatedValue.toStringAsFixed(0)}. ${lot.recyclerName != null ? 'Recycler: ${lot.recyclerName}.' : 'No recycler assigned yet.'}');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -327,37 +345,59 @@ class _LotsScreenState extends State<LotsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Lot ID + Status Badge
+          // Header: Lot ID + Audio Button + Status Badge
+          // Header: Lot ID + Category (left) and Status Badge (right)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceMuted,
-                      borderRadius: BorderRadius.circular(6),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text('LOT #${lot.id}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
                     ),
-                    child: Text('LOT #${lot.id}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(4),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          lot.category,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
+                        ),
+                      ),
                     ),
-                    child: Text(
-                      lot.category,
-                      style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               _statusBadge(lot.status),
             ],
           ),
+
+          const SizedBox(height: 8),
+
+          // Audio narration button for lot
+          Row(
+            children: [
+              AccessibleAudioButton(
+                textToSpeak: spokenLot,
+                currentLang: widget.currentLang,
+                compact: true,
+              ),
+            ],
+          ),
+
 
           const SizedBox(height: 10),
 

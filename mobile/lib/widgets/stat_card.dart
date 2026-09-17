@@ -24,72 +24,66 @@ class StatCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: const [
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border, width: 1),
+          boxShadow: [
             BoxShadow(
-              color: Color(0x08000000),
-              blurRadius: 6,
-              offset: Offset(0, 2),
+              color: AppColors.primary.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Symbol badge
+            // Icon/Symbol Header
             Container(
-              width: 38,
-              height: 38,
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: accentColor.withAlpha(25),
-                borderRadius: BorderRadius.circular(10),
+                color: accentColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Center(
-                child: Text(
-                  symbol,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: accentColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+              child: Text(
+                symbol,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: accentColor,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 16),
+            // Value
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            // Labels
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],

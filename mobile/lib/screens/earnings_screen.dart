@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/lot.dart';
 import '../theme/app_colors.dart';
+import '../widgets/accessible_audio_button.dart';
 
 class EarningsScreen extends StatelessWidget {
   final String currentLang;
@@ -37,14 +38,38 @@ class EarningsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Earnings & Financial Ledger',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Earnings & Financial Ledger',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                    ),
+                    Text(
+                      isHindi ? 'कमाई और वित्तीय खाता — नकद और यूपीआई' : (isMarathi ? 'कमाई आणि खातेवही — रोख आणि यूपीआय' : 'Transparent digital receipts for UPI and cash scale payouts'),
+                      style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              AccessibleAudioButton(
+                textToSpeak: isHindi
+                    ? 'आपकी आज की कमाई ₹${todayPayout.toStringAsFixed(0)} है। कुल प्रमाणित कमाई ₹${totalPayout.toStringAsFixed(0)} है। ₹${pendingPayout.toStringAsFixed(0)} का भुगतान प्रक्रिया में है।'
+                    : (isMarathi
+                        ? 'आपली आजची कमाई ₹${todayPayout.toStringAsFixed(0)} आहे. एकूण प्रमाणित कमाई ₹${totalPayout.toStringAsFixed(0)} आहे. ₹${pendingPayout.toStringAsFixed(0)} पेमेंट प्रक्रियेत आहे.'
+                        : 'Today\'s earnings are ₹${todayPayout.toStringAsFixed(0)}. Total verified payout is ₹${totalPayout.toStringAsFixed(0)}. Pending payout is ₹${pendingPayout.toStringAsFixed(0)}.'),
+                currentLang: currentLang,
+                compact: true,
+              ),
+            ],
           ),
-          Text(
-            isHindi ? 'कमाई और वित्तीय खाता — नकद और यूपीआई' : (isMarathi ? 'कमाई आणि खातेवही — रोख आणि यूपीआय' : 'Transparent digital receipts for UPI and cash scale payouts'),
-            style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
-          ),
+
 
           const SizedBox(height: 16),
 

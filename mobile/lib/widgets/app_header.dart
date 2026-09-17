@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../services/speech_service.dart';
 
 class AppHeader extends StatelessWidget {
   final String currentLang;
@@ -74,14 +75,36 @@ class AppHeader extends StatelessWidget {
                 ),
               ),
 
-              // Indic Audio button
+              // Indic Audio button with large accessible touch target
               if (onSpeak != null)
-                IconButton(
-                  onPressed: onSpeak,
-                  icon: const Icon(Icons.volume_up_rounded, size: 18, color: AppColors.primary),
-                  tooltip: 'Listen Audio',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                InkWell(
+                  onTap: onSpeak,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    height: 36,
+                    constraints: const BoxConstraints(minWidth: 46),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFF86EFAC)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.volume_up_rounded, size: 17, color: Color(0xFF15803D)),
+                        const SizedBox(width: 3),
+                        Text(
+                          currentLang == 'hi' ? 'सुनें' : (currentLang == 'mr' ? 'ऐका' : 'Listen'),
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF15803D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               const SizedBox(width: 6),
 
@@ -214,7 +237,10 @@ class AppHeader extends StatelessWidget {
   Widget _langChip(String label, String code) {
     final bool isSelected = currentLang == code;
     return GestureDetector(
-      onTap: () => onSelectLang(code),
+      onTap: () {
+        SpeechService().onLanguageChanged(code);
+        onSelectLang(code);
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(

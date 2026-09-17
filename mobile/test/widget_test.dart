@@ -1,17 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:revive_mobile/app.dart';
+import 'package:revive_mobile/screens/launch_splash_screen.dart';
+
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('xyz.luan/audioplayers.global'),
+      (MethodCall methodCall) async => 1,
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('xyz.luan/audioplayers'),
+      (MethodCall methodCall) async => 1,
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('flutter_tts'),
+      (MethodCall methodCall) async => 1,
+    );
+  });
+
+  Future<void> launchAndSettleApp(WidgetTester tester) async {
+    await tester.pumpWidget(const ReViveApp(splashDuration: Duration.zero));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('First-time app launch shows Welcome/Auth screen with Login and Register', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(() => tester.view.resetPhysicalSize());
 
-    await tester.pumpWidget(const ReViveApp());
-    await tester.pumpAndSettle();
+    await launchAndSettleApp(tester);
 
     // Verify Welcome / Authentication Screen on first launch
+
     expect(find.text('ReVive Collector'), findsOneWidget);
     expect(find.text('Collector Login (लॉगिन)'), findsOneWidget);
     expect(find.text('New Registration (पंजीकरण)'), findsOneWidget);
@@ -35,8 +63,7 @@ void main() {
     tester.view.devicePixelRatio = 2.0;
     addTearDown(() => tester.view.resetPhysicalSize());
 
-    await tester.pumpWidget(const ReViveApp());
-    await tester.pumpAndSettle();
+    await launchAndSettleApp(tester);
 
     // Authenticate
     await tester.tap(find.text('Continue as Ram Yadav (Collector)'));
@@ -66,8 +93,7 @@ void main() {
     tester.view.devicePixelRatio = 2.0;
     addTearDown(() => tester.view.resetPhysicalSize());
 
-    await tester.pumpWidget(const ReViveApp());
-    await tester.pumpAndSettle();
+    await launchAndSettleApp(tester);
 
     // Authenticate
     await tester.tap(find.text('Continue as Ram Yadav (Collector)'));

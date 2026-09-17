@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/price_benchmark.dart';
 import '../theme/app_colors.dart';
+import '../services/speech_service.dart';
+import '../widgets/accessible_audio_button.dart';
 
 class PriceBoardScreen extends StatefulWidget {
   final String currentLang;
@@ -237,6 +239,13 @@ class _PriceBoardScreenState extends State<PriceBoardScreen> {
     );
   }
 
+  @override
+  void dispose() {
+
+    SpeechService().stop();
+    super.dispose();
+  }
+
   void _speakPrice(PriceBenchmark b) {
     final isHindi = widget.currentLang == 'hi';
     final isMarathi = widget.currentLang == 'mr';
@@ -246,25 +255,17 @@ class _PriceBoardScreenState extends State<PriceBoardScreen> {
             ? 'आज ${b.category} चा भाव ₹ ${b.minRate.toStringAsFixed(0)} ते ₹ ${b.maxRate.toStringAsFixed(0)} प्रति किलो आहे. सरासरी भाव ₹ ${b.medianRate.toStringAsFixed(0)} आहे.'
             : 'Today\'s price for ${b.category} is ₹ ${b.minRate.toStringAsFixed(0)} to ₹ ${b.maxRate.toStringAsFixed(0)} per kg. Median price is ₹ ${b.medianRate.toStringAsFixed(0)}.');
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color(0xFF0F172A),
-        content: Row(
-          children: [
-            const Icon(Icons.volume_up, color: AppColors.primary, size: 20),
-            const SizedBox(width: 10),
-            Expanded(child: Text(spokenText, style: const TextStyle(color: Colors.white, fontSize: 12))),
-          ],
-        ),
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    SpeechService().speak(spokenText, lang: widget.currentLang);
   }
 
   Widget _benchmarkCard(PriceBenchmark b) {
     final isHindi = widget.currentLang == 'hi';
     final isMarathi = widget.currentLang == 'mr';
-    final listenLabel = isHindi ? '🔊 सुनें' : (isMarathi ? '🔊 ऐका' : '🔊 Listen');
+    final spokenText = isHindi
+        ? 'आज ${b.category} का भाव ₹ ${b.minRate.toStringAsFixed(0)} से ₹ ${b.maxRate.toStringAsFixed(0)} प्रति किलो है। अनुशंसित औसत भाव ₹ ${b.medianRate.toStringAsFixed(0)} प्रति किलो है।'
+        : (isMarathi
+            ? 'आज ${b.category} चा भाव ₹ ${b.minRate.toStringAsFixed(0)} ते ₹ ${b.maxRate.toStringAsFixed(0)} प्रति किलो आहे. सरासरी भाव ₹ ${b.medianRate.toStringAsFixed(0)} आहे.'
+            : 'Today\'s price for ${b.category} is ₹ ${b.minRate.toStringAsFixed(0)} to ₹ ${b.maxRate.toStringAsFixed(0)} per kg. Median price is ₹ ${b.medianRate.toStringAsFixed(0)}.');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -313,11 +314,10 @@ class _PriceBoardScreenState extends State<PriceBoardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton.icon(
-                onPressed: () => _speakPrice(b),
-                icon: const Icon(Icons.volume_up, size: 16, color: AppColors.primary),
-                label: Text(listenLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
+              AccessibleAudioButton(
+                textToSpeak: spokenText,
+                currentLang: widget.currentLang,
+                compact: true,
               ),
               TextButton.icon(
                 onPressed: () => _showWhyThisPriceDialog(b),
@@ -340,3 +340,4 @@ class _PriceBoardScreenState extends State<PriceBoardScreen> {
     );
   }
 }
+
