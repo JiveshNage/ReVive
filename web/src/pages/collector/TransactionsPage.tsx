@@ -1,5 +1,7 @@
 import React from 'react';
 import { Lot, Material, Offer, Lang, I18N, ActivePage } from '../../types';
+import { ExportButton } from '../../components/common/ExportButton';
+import { downloadCSV, downloadXLSX, downloadElementAsJPG } from '../../utils/exportUtils';
 
 interface TransactionsPageProps {
   currentLang: Lang;
@@ -36,9 +38,24 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
   setTraceabilityLotId,
   getStatusLabel,
 }) => {
+  const filteredLots = txStatusFilter === 'all' ? lots : lots.filter((l) => l.status === txStatusFilter);
+
+  const transactionExportRows = filteredLots.map((l) => {
+    const mat = materials.find((m) => m.id === l.material_id);
+    const relOffer = [...offers].reverse().find((o) => o.lot_id === l.id);
+    return [
+      `REV-LOT-${l.id}`,
+      mat?.name ?? 'E-Waste Material',
+      `${l.quantity_kg} kg`,
+      `₹ ${relOffer?.offer_price ?? l.estimated_value}`,
+      getStatusLabel(l.status),
+      l.created_at || 'Verified Record',
+    ];
+  });
+
   return (
-    <div className="multipage-view">
-      <div className="page-header-row">
+    <div className="multipage-view" id="transactions-ledger-box">
+      <div className="page-header-row" style={{ flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {I18N[currentLang].auditTrailTitle}
@@ -54,7 +71,36 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
           </h1>
           <p>{I18N[currentLang].auditTrailSubtitle}</p>
         </div>
-        <button className="primary-button" onClick={() => setActivePage('create_lot')}>+ {I18N[currentLang].createLot}</button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <ExportButton
+            label={currentLang === 'hi' ? 'लेनदेन लेजर डाउनलोड' : 'Download Ledger'}
+            onExportCSV={() =>
+              downloadCSV(
+                `ReVive_Transactions_${txStatusFilter}`,
+                ['Lot Reference', 'Material', 'Weight', 'Settlement Value', 'Status', 'Record Date'],
+                transactionExportRows
+              )
+            }
+            onExportXLSX={() =>
+              downloadXLSX(
+                `ReVive_Transactions_${txStatusFilter}`,
+                'Transactions_Ledger',
+                ['Lot Reference', 'Material', 'Weight', 'Settlement Value', 'Status', 'Record Date'],
+                transactionExportRows
+              )
+            }
+            onExportJPG={() =>
+              downloadElementAsJPG(
+                'transactions-ledger-box',
+                `ReVive_Transactions_Ledger.jpg`,
+                'ReVive E-Waste Transactions & Traceability Ledger'
+              )
+            }
+          />
+          <button className="primary-button" onClick={() => setActivePage('create_lot')}>
+            + {I18N[currentLang].createLot}
+          </button>
+        </div>
       </div>
 
       {/* Status Filter Tabs */}

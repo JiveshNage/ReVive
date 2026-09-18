@@ -1,6 +1,8 @@
 import React from 'react';
 import { QRCodeGraphic } from '../QRCodeGraphic';
 import { RecyclingPassport, Lang, I18N } from '../../types';
+import { ExportButton } from '../common/ExportButton';
+import { downloadCSV, downloadXLSX, generatePassportJPG } from '../../utils/exportUtils';
 
 interface PassportModalProps {
   isOpen: boolean;
@@ -122,17 +124,76 @@ export const PassportModal: React.FC<PassportModalProps> = ({
                 ))}
               </div>
 
-              <div style={{ marginTop: '18px', display: 'flex', gap: '10px' }}>
+              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <ExportButton
+                  label="Download Passport"
+                  onExportJPG={() =>
+                    generatePassportJPG({
+                      passport_id: selectedPassport.passport_id,
+                      status: getStatusLabel(selectedPassport.status),
+                      material_name: selectedPassport.material_name,
+                      material_category: selectedPassport.material_category,
+                      initial_weight_kg: selectedPassport.initial_weight_kg,
+                      verified_weight_kg: selectedPassport.verified_weight_kg,
+                      collector_alias: selectedPassport.collector_alias,
+                      recycler_name: selectedPassport.recycler_name,
+                      co2_saved_kg: selectedPassport.co2_saved_kg,
+                      toxic_diverted_kg: selectedPassport.toxic_diverted_kg,
+                      certificate_hash: selectedPassport.certificate_hash,
+                    })
+                  }
+                  onExportCSV={() =>
+                    downloadCSV(
+                      `CPCB_Passport_${selectedPassport.passport_id}`,
+                      ['Field', 'Value'],
+                      [
+                        ['Passport Identifier', selectedPassport.passport_id],
+                        ['Status', getStatusLabel(selectedPassport.status)],
+                        ['Material Name', selectedPassport.material_name],
+                        ['Material Category', selectedPassport.material_category],
+                        ['Initial Weight (kg)', selectedPassport.initial_weight_kg],
+                        ['Verified Weight (kg)', selectedPassport.verified_weight_kg || 'In transit'],
+                        ['Originator (Collector)', selectedPassport.collector_alias],
+                        ['Authorized Recycler', selectedPassport.recycler_name || 'CPCB Facility'],
+                        ['CO2 Saved (kg)', selectedPassport.co2_saved_kg],
+                        ['Toxic Metals Diverted (kg)', selectedPassport.toxic_diverted_kg],
+                        ['Certificate Hash (SHA-256)', selectedPassport.certificate_hash],
+                        ['Exported Date', new Date().toLocaleString()],
+                      ]
+                    )
+                  }
+                  onExportXLSX={() =>
+                    downloadXLSX(
+                      `CPCB_Passport_${selectedPassport.passport_id}`,
+                      'Passport_Manifest',
+                      ['Field', 'Value'],
+                      [
+                        ['Passport Identifier', selectedPassport.passport_id],
+                        ['Status', getStatusLabel(selectedPassport.status)],
+                        ['Material Name', selectedPassport.material_name],
+                        ['Material Category', selectedPassport.material_category],
+                        ['Initial Weight (kg)', selectedPassport.initial_weight_kg],
+                        ['Verified Weight (kg)', selectedPassport.verified_weight_kg || 'In transit'],
+                        ['Originator (Collector)', selectedPassport.collector_alias],
+                        ['Authorized Recycler', selectedPassport.recycler_name || 'CPCB Facility'],
+                        ['CO2 Saved (kg)', selectedPassport.co2_saved_kg],
+                        ['Toxic Metals Diverted (kg)', selectedPassport.toxic_diverted_kg],
+                        ['Certificate Hash (SHA-256)', selectedPassport.certificate_hash],
+                        ['Exported Date', new Date().toLocaleString()],
+                      ]
+                    )
+                  }
+                />
                 <button
                   className="dialog-submit"
-                  style={{ background: '#047857' }}
+                  style={{ background: '#047857', flex: 1, minWidth: '160px' }}
                   onClick={() => window.print()}
                 >
-                  🖨️ Print / Export Passport
+                  🖨️ Print / Save PDF
                 </button>
                 <button
                   className="secondary-button"
-                  style={{ width: '40%' }}
+                  style={{ minWidth: '130px' }}
                   onClick={() => {
                     navigator.clipboard?.writeText(selectedPassport.passport_id);
                     alert(`Passport reference copied: ${selectedPassport.passport_id}`);

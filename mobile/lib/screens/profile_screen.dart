@@ -212,7 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                   ),
                   value: _startupSoundEnabled,
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   onChanged: (bool value) async {
                     setState(() => _startupSoundEnabled = value);
                     await StartupAudioService().setEnabled(value);

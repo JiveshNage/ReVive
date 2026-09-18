@@ -25,6 +25,7 @@ import {
 
 import { LandingPage } from './pages/LandingPage';
 import { Navbar } from './components/Navbar';
+import { Sidebar } from './components/Sidebar';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
 import { loginWithFirebaseGoogle } from './firebase';
@@ -203,6 +204,39 @@ export function App() {
       return !prev;
     });
   };
+
+  // Sidebar navigation panel state (expanded vs collapsed & mobile drawer)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.localStorage.getItem('revive_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem('revive_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Ctrl+B shortcut to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
 
   // Sync queue for offline resilience (PRD FR-17)
@@ -1415,8 +1449,8 @@ export function App() {
     verificationView === 'pending' ? recyclers.filter((recycler) => !recycler.verified) : recyclers;
 
   return (
-    <div className="app-layout">
-      {/* 1. UPPER NAVIGATION PANEL (NAVBAR) */}
+    <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}>
+      {/* 1. TOP PANEL NAVIGATION (NAVBAR) */}
       <Navbar
         currentLang={currentLang}
         onSelectLang={setCurrentLang}
@@ -1439,10 +1473,37 @@ export function App() {
         pendingOffersCount={pendingOffers.length}
         openAnomaliesCount={adminAnomalies.filter((a) => a.status === 'open').length}
         acceptedOffersCount={acceptedOffers.length}
+        onToggleSidebar={toggleSidebar}
+        sidebarCollapsed={sidebarCollapsed}
+        onOpenMobileSidebar={() => setMobileSidebarOpen(true)}
       />
 
-      {/* 2. MAIN APPLICATION CONTENT AREA */}
-      <main className="main-content">
+      {/* 2. DUAL PANEL LAYOUT: SIDEBAR + MAIN WORKSPACE */}
+      <div className="app-workspace-layout">
+        <Sidebar
+          currentLang={currentLang}
+          activeRole={activeRole}
+          setActiveRole={setActiveRole}
+          activePage={activePage}
+          setActivePage={setActivePage}
+          recyclerSubView={recyclerSubView}
+          setRecyclerSubView={setRecyclerSubView}
+          adminTab={adminTab}
+          setAdminTab={setAdminTab}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebar}
+          isMobileOpen={mobileSidebarOpen}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
+          pendingOffersCount={pendingOffers.length}
+          openAnomaliesCount={adminAnomalies.filter((a) => a.status === 'open').length}
+          acceptedOffersCount={acceptedOffers.length}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          onOpenLiveScanner={() => setCameraScannerOpen(true)}
+        />
+
+        {/* 3. MAIN APPLICATION CONTENT AREA */}
+        <main className="main-content">
 
         {/* 3. CONDITIONAL PAGE RENDERING */}
         {activeRole === 'recycler' ? (
@@ -1790,6 +1851,7 @@ export function App() {
           />
         )}
       </main>
+      </div>
     </div>
   );
 }

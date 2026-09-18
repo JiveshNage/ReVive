@@ -1,5 +1,7 @@
 import React from 'react';
 import { Lang, I18N, DemoWorkflowResult, AdminAnomaly, Lot } from '../../types';
+import { ExportButton } from '../../components/common/ExportButton';
+import { downloadCSV, downloadXLSX, downloadElementAsJPG } from '../../utils/exportUtils';
 
 export interface AdminKpisProps {
   currentLang: Lang;
@@ -20,11 +22,21 @@ export const AdminKpis: React.FC<AdminKpisProps> = ({
   lots,
   adminAnomalies,
 }) => {
+  const kpiExportRows = [
+    ['Active Pipeline Lots', lots.filter((l) => ['created', 'offers', 'pickup'].includes(l.status)).length],
+    ['Completed Cycles (Handed Over / Paid)', lots.filter((l) => ['handed_over', 'payment_completed'].includes(l.status)).length],
+    ['Active Fraud Anomalies', adminAnomalies.filter((a) => a.status === 'open').length],
+    ['Total Registered Lots', lots.length],
+    ['Gross Diverted Weight (kg)', Math.round(lots.reduce((acc, l) => acc + l.quantity_kg, 0))],
+    ['Statutory Standard', 'CPCB Rule 2022 Mandate'],
+    ['Report Generated', new Date().toLocaleString()],
+  ];
+
   return (
-    <div className="admin-subpage-container">
+    <div className="admin-subpage-container" id="admin-kpis-container">
       {/* SIH Simulation Trigger Banner */}
-      <div className="sih-simulator-card">
-        <div className="sih-simulator-info">
+      <div className="sih-simulator-card" style={{ flexWrap: 'wrap', gap: '16px' }}>
+        <div className="sih-simulator-info" style={{ flex: 1, minWidth: '280px' }}>
           <div className="simulator-badge">⚡ SIH Automated Verification Pipeline</div>
           <h3>Smart India Hackathon Live Simulation</h3>
           <p>
@@ -33,7 +45,23 @@ export const AdminKpis: React.FC<AdminKpisProps> = ({
             Tamper-proof SHA-256 certificate generation.
           </p>
         </div>
-        <div>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <ExportButton
+            label="Download KPI Audit"
+            onExportCSV={() =>
+              downloadCSV('CPCB_National_KPIs_Audit', ['Metric', 'Value'], kpiExportRows)
+            }
+            onExportXLSX={() =>
+              downloadXLSX('CPCB_National_KPIs_Audit', 'National_KPIs', ['Metric', 'Value'], kpiExportRows)
+            }
+            onExportJPG={() =>
+              downloadElementAsJPG(
+                'admin-kpis-container',
+                'CPCB_National_KPI_Report.jpg',
+                'National E-Waste Circular Exchange - Statutory KPIs'
+              )
+            }
+          />
           <button
             type="button"
             className="demo-run-button"

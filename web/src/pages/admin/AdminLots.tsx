@@ -1,5 +1,7 @@
 import React from 'react';
 import { Lot, Material, Offer } from '../../types';
+import { ExportButton } from '../../components/common/ExportButton';
+import { downloadCSV, downloadXLSX, downloadElementAsJPG } from '../../utils/exportUtils';
 
 export interface AdminLotsProps {
   lots: Lot[];
@@ -18,13 +20,51 @@ export const AdminLots: React.FC<AdminLotsProps> = ({
   openPassport,
   setTraceabilityLotId,
 }) => {
+  const adminLotsExportRows = lots.map((l) => {
+    const mat = materials.find((m) => m.id === l.material_id);
+    const relatedOffer = [...offers].reverse().find((o) => o.lot_id === l.id);
+    return [
+      `REV-LOT-${l.id}`,
+      mat?.name ?? 'E-Waste',
+      `${l.quantity_kg} kg`,
+      `₹ ${(relatedOffer?.offer_price ?? l.estimated_value).toLocaleString('en-IN')}`,
+      getStatusLabel(l.status),
+      l.created_at || 'Recorded on Blockchain',
+    ];
+  });
+
   return (
-    <div className="admin-subpage-container">
-      <div className="subpage-header-row">
+    <div className="admin-subpage-container" id="admin-master-ledger-box">
+      <div className="subpage-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2>📋 Master Statutory E-Waste Ledger</h2>
           <p>National immutable traceability ledger recording material flow from informal waste pickers to recyclers</p>
         </div>
+        <ExportButton
+          label="Export Master Ledger"
+          onExportCSV={() =>
+            downloadCSV(
+              'ReVive_Master_Statutory_Ledger',
+              ['Lot Reference', 'Material Category', 'Quantity', 'Settlement Value', 'Lifecycle Status', 'Date Logged'],
+              adminLotsExportRows
+            )
+          }
+          onExportXLSX={() =>
+            downloadXLSX(
+              'ReVive_Master_Statutory_Ledger',
+              'CPCB_Ledger',
+              ['Lot Reference', 'Material Category', 'Quantity', 'Settlement Value', 'Lifecycle Status', 'Date Logged'],
+              adminLotsExportRows
+            )
+          }
+          onExportJPG={() =>
+            downloadElementAsJPG(
+              'admin-master-ledger-box',
+              'ReVive_CPCB_Master_Ledger.jpg',
+              'CPCB Master Statutory E-Waste Ledger'
+            )
+          }
+        />
       </div>
 
       <div className="panel legacy-panel">

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Lang, ActivePage, UserProfile, Lot, Material, Recycler, RecyclerMatch, I18N } from '../../types';
+import { ExportButton } from '../../components/common/ExportButton';
+import { downloadCSV, downloadXLSX, generateValuationSlipJPG } from '../../utils/exportUtils';
 
 export interface CollectorHomeProps {
   currentLang: Lang;
@@ -236,9 +238,66 @@ export const CollectorHome: React.FC<CollectorHomeProps> = ({
 
       {/* AI SCRAP SCANNER CARD */}
       <section className="panel" style={{ marginTop: '20px' }}>
-        <div className="panel-header">
-          <h2>AI scrap scan & market valuation</h2>
-          <span>Neural model + Live rate engine</span>
+        <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <h2>AI scrap scan & market valuation</h2>
+            <span>Neural model + Live rate engine</span>
+          </div>
+          {aiResult && (
+            <ExportButton
+              label={currentLang === 'hi' ? 'मूल्यांकन पर्ची डाउनलोड' : 'Download Valuation Slip'}
+              onExportJPG={() =>
+                generateValuationSlipJPG({
+                  category: aiResult.category,
+                  confidence: aiResult.confidence,
+                  location: aiResult.location,
+                  weight_kg: aiResult.weight_kg,
+                  estimated_value: aiResult.pricing?.estimated_value,
+                  price_min: aiResult.pricing?.price_min,
+                  price_max: aiResult.pricing?.price_max,
+                  median_per_kg: aiResult.pricing?.price_per_kg_median,
+                  top_predictions: aiResult.top_predictions,
+                })
+              }
+              onExportCSV={() =>
+                downloadCSV(
+                  `ReVive_Valuation_${aiResult.category.replace(/\s+/g, '_')}`,
+                  ['Parameter', 'Value'],
+                  [
+                    ['Material Category', aiResult.category],
+                    ['Confidence Score', `${(aiResult.confidence * 100).toFixed(1)}%`],
+                    ['Confidence Tier', aiResult.confidence_tier || 'Classified'],
+                    ['Location Hub', aiResult.location || 'Bhopal'],
+                    ['Estimated Weight (kg)', aiResult.weight_kg || 5],
+                    ['Guaranteed Market Value (INR)', aiResult.pricing?.estimated_value || 850],
+                    ['Median Benchmark Rate (INR/kg)', aiResult.pricing?.price_per_kg_median || 170],
+                    ['Min Benchmark Rate (INR/kg)', aiResult.pricing?.price_min || 150],
+                    ['Max Benchmark Rate (INR/kg)', aiResult.pricing?.price_max || 195],
+                    ['Generated Date', new Date().toLocaleString()],
+                  ]
+                )
+              }
+              onExportXLSX={() =>
+                downloadXLSX(
+                  `ReVive_Valuation_${aiResult.category.replace(/\s+/g, '_')}`,
+                  'Valuation_Details',
+                  ['Parameter', 'Value'],
+                  [
+                    ['Material Category', aiResult.category],
+                    ['Confidence Score', `${(aiResult.confidence * 100).toFixed(1)}%`],
+                    ['Confidence Tier', aiResult.confidence_tier || 'Classified'],
+                    ['Location Hub', aiResult.location || 'Bhopal'],
+                    ['Estimated Weight (kg)', aiResult.weight_kg || 5],
+                    ['Guaranteed Market Value (INR)', aiResult.pricing?.estimated_value || 850],
+                    ['Median Benchmark Rate (INR/kg)', aiResult.pricing?.price_per_kg_median || 170],
+                    ['Min Benchmark Rate (INR/kg)', aiResult.pricing?.price_min || 150],
+                    ['Max Benchmark Rate (INR/kg)', aiResult.pricing?.price_max || 195],
+                    ['Generated Date', new Date().toLocaleString()],
+                  ]
+                )
+              }
+            />
+          )}
         </div>
         <div className="sync-list">
           <div className="sync-row">
@@ -286,6 +345,8 @@ export const CollectorHome: React.FC<CollectorHomeProps> = ({
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   marginBottom: '8px',
+                  flexWrap: 'wrap',
+                  gap: '8px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -298,15 +359,63 @@ export const CollectorHome: React.FC<CollectorHomeProps> = ({
                     {(aiResult.confidence * 100).toFixed(1)}% ({aiResult.confidence_tier ?? 'classified'})
                   </span>
                 </div>
-                <button
-                  className="mini-action"
-                  onClick={() => {
-                    onApplyAiPredictionToLot();
-                    onNavigatePage('create_lot');
-                  }}
-                >
-                  Use in New Lot Studio →
-                </button>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <ExportButton
+                    inline
+                    size="sm"
+                    onExportJPG={() =>
+                      generateValuationSlipJPG({
+                        category: aiResult.category,
+                        confidence: aiResult.confidence,
+                        location: aiResult.location,
+                        weight_kg: aiResult.weight_kg,
+                        estimated_value: aiResult.pricing?.estimated_value,
+                        price_min: aiResult.pricing?.price_min,
+                        price_max: aiResult.pricing?.price_max,
+                        median_per_kg: aiResult.pricing?.price_per_kg_median,
+                        top_predictions: aiResult.top_predictions,
+                      })
+                    }
+                    onExportCSV={() =>
+                      downloadCSV(
+                        `ReVive_Valuation_${aiResult.category.replace(/\s+/g, '_')}`,
+                        ['Parameter', 'Value'],
+                        [
+                          ['Material Category', aiResult.category],
+                          ['Confidence Score', `${(aiResult.confidence * 100).toFixed(1)}%`],
+                          ['Location Hub', aiResult.location || 'Bhopal'],
+                          ['Estimated Weight (kg)', aiResult.weight_kg || 5],
+                          ['Guaranteed Market Value (INR)', aiResult.pricing?.estimated_value || 850],
+                          ['Median Rate (INR/kg)', aiResult.pricing?.price_per_kg_median || 170],
+                        ]
+                      )
+                    }
+                    onExportXLSX={() =>
+                      downloadXLSX(
+                        `ReVive_Valuation_${aiResult.category.replace(/\s+/g, '_')}`,
+                        'Valuation',
+                        ['Parameter', 'Value'],
+                        [
+                          ['Material Category', aiResult.category],
+                          ['Confidence Score', `${(aiResult.confidence * 100).toFixed(1)}%`],
+                          ['Location Hub', aiResult.location || 'Bhopal'],
+                          ['Estimated Weight (kg)', aiResult.weight_kg || 5],
+                          ['Guaranteed Market Value (INR)', aiResult.pricing?.estimated_value || 850],
+                          ['Median Rate (INR/kg)', aiResult.pricing?.price_per_kg_median || 170],
+                        ]
+                      )
+                    }
+                  />
+                  <button
+                    className="mini-action"
+                    onClick={() => {
+                      onApplyAiPredictionToLot();
+                      onNavigatePage('create_lot');
+                    }}
+                  >
+                    Use in New Lot Studio →
+                  </button>
+                </div>
               </div>
 
               {aiResult.pricing && (

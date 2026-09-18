@@ -1,5 +1,7 @@
 import React from 'react';
 import { Lang, UserProfile, I18N } from '../../types';
+import { ExportButton } from '../../components/common/ExportButton';
+import { downloadCSV, downloadXLSX, downloadElementAsJPG } from '../../utils/exportUtils';
 
 export interface EarningsPageProps {
   currentLang: Lang;
@@ -12,16 +14,61 @@ export const EarningsPage: React.FC<EarningsPageProps> = ({
   currentUser,
   onNavigateCreateLot,
 }) => {
+  const settlementList = [
+    { ref: 'REV-LOT-001', mat: 'Printed Circuit Boards', w: 10.0, rec: 'EcoCycle Pune', mode: 'Cash Handover', amt: 1850, date: 'Today' },
+    { ref: 'REV-LOT-002', mat: 'Insulated Copper Wire', w: 25.5, rec: 'CleanEarth Bhopal', mode: 'Instant UPI', amt: 2805, date: 'Yesterday' },
+    { ref: 'REV-LOT-003', mat: 'Lithium-Ion Batteries', w: 15.0, rec: 'GreenLoop Nashik', mode: 'Cash Handover', amt: 975, date: '3 days ago' },
+    { ref: 'REV-LOT-004', mat: 'LCD Display Monitors', w: 12.0, rec: 'EcoCycle Pune', mode: 'Instant UPI', amt: 1140, date: '1 week ago' },
+  ];
+
+  const settlementExportRows = settlementList.map((tx) => [
+    tx.ref,
+    tx.mat,
+    `${tx.w} kg`,
+    tx.rec,
+    tx.mode,
+    `₹ ${tx.amt}`,
+    '✓ Settled',
+    tx.date,
+  ]);
+
   return (
-    <div className="multipage-view">
-      <div className="page-header-row">
+    <div className="multipage-view" id="earnings-page-view">
+      <div className="page-header-row" style={{ flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
         <div>
           <h1>{I18N[currentLang].earningsTitle}</h1>
           <p>{I18N[currentLang].earningsSubtitle}</p>
         </div>
-        <button className="primary-button" onClick={onNavigateCreateLot}>
-          + Sell New Scrap
-        </button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <ExportButton
+            label={currentLang === 'hi' ? 'कमाई रिपोर्ट डाउनलोड' : 'Download Report'}
+            onExportCSV={() =>
+              downloadCSV(
+                'ReVive_Earnings_Settlements',
+                ['Lot Reference', 'Material', 'Weight', 'Authorized Recycler', 'Payout Mode', 'Settlement Amount', 'Status', 'Date'],
+                settlementExportRows
+              )
+            }
+            onExportXLSX={() =>
+              downloadXLSX(
+                'ReVive_Earnings_Settlements',
+                'Settlements_Report',
+                ['Lot Reference', 'Material', 'Weight', 'Authorized Recycler', 'Payout Mode', 'Settlement Amount', 'Status', 'Date'],
+                settlementExportRows
+              )
+            }
+            onExportJPG={() =>
+              downloadElementAsJPG(
+                'earnings-page-view',
+                'ReVive_Earnings_Statement.jpg',
+                `ReVive Earnings Statement - ${currentUser?.name || 'Authorized Collector'}`
+              )
+            }
+          />
+          <button className="primary-button" onClick={onNavigateCreateLot}>
+            + Sell New Scrap
+          </button>
+        </div>
       </div>
 
       <section className="stats-grid">

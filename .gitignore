@@ -1,44 +1,99 @@
-# Python
+# =========================
+# ReVive Git Ignore
+# =========================
+
+# ---------- Python ----------
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-.venv*/
+.venv/
 venv/
+env/
 .pytest_cache/
-.env
+.mypy_cache/
 
-# Database
+# ---------- Environment ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Database ----------
 *.db
 *.sqlite3
 
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-
-# Build and temp
+# ---------- Logs ----------
 *.log
-*.sqlite3
 
-# Node
+# ---------- Node / React ----------
 node_modules/
 dist/
-.dist/
 build/
+.vite/
+*.tsbuildinfo
 
-# Flutter
+# ---------- Flutter / Dart ----------
 .dart_tool/
 .packages
 .pub-cache/
-.pubspec.lock
 pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
 
-# Docker
+# ---------- Flutter generated/build output ----------
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# ---------- Android / Gradle ----------
+.gradle/
+**/.gradle/
+.gradle_build/
+.gradle_home/
+**/.gradle_project_cache/
+**/.gradle_revive/
+android/.gradle/
+mobile/android/.gradle/
+
+# ---------- Flutter artifacts ----------
+**/.artifacts/
+mobile/.artifacts/
+
+# ---------- APK / AAB ----------
+*.apk
+*.aab
+
+# ---------- IDE ----------
+.vscode/
+.idea/
+*.iml
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- Docker ----------
 *.local
 
-# Uploads & Temp Media
+# ---------- Temporary / uploads ----------
 uploads/
+*.tmp
+*.temp
+
+# ---------- Generated coverage ----------
+coverage/
+
+# ---------- iOS generated ----------
+**/Pods/
+**/.symlinks/
+**/Flutter/ephemeral/
+**/Flutter/App.framework
+**/Flutter/Flutter.framework
+
+# ---------- Web generated ----------
+**/.pub/
+
+# Firebase
+**/google-services.json

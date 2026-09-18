@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Lang, Material, I18N } from '../../types';
+import { ExportButton } from '../../components/common/ExportButton';
+import { downloadCSV, downloadXLSX, downloadElementAsJPG } from '../../utils/exportUtils';
 
 export interface PriceBoardPageProps {
   currentLang: Lang;
@@ -70,16 +72,52 @@ export const PriceBoardPage: React.FC<PriceBoardPageProps> = ({
     padT + plotH
   } Z`;
 
+  const benchmarkExportRows = [
+    { cat: 'Printed Circuit Boards (PCB)', median: Math.round(185 * cityFactor), min: Math.round(165 * cityFactor), max: Math.round(195 * cityFactor), samples: 14 },
+    { cat: 'Copper Wire & Insulated Cables', median: Math.round(110 * cityFactor), min: Math.round(90 * cityFactor), max: Math.round(125 * cityFactor), samples: 18 },
+    { cat: 'Lithium-Ion & Lead Batteries', median: Math.round(65 * cityFactor), min: Math.round(55 * cityFactor), max: Math.round(75 * cityFactor), samples: 9 },
+    { cat: 'LCD & LED Monitor Screens', median: Math.round(95 * cityFactor), min: Math.round(70 * cityFactor), max: Math.round(110 * cityFactor), samples: 12 },
+    { cat: 'Non-Ferrous E-Waste Metals', median: Math.round(98 * cityFactor), min: Math.round(80 * cityFactor), max: Math.round(115 * cityFactor), samples: 16 },
+    { cat: 'Recycled Polymer Plastics', median: Math.round(42 * cityFactor), min: Math.round(35 * cityFactor), max: Math.round(50 * cityFactor), samples: 21 },
+  ].map((i) => [i.cat, selectedCity, `₹ ${i.median}/kg`, `₹ ${i.min}/kg`, `₹ ${i.max}/kg`, i.samples]);
+
   return (
-    <div className="multipage-view">
-      <div className="page-header-row">
+    <div className="multipage-view" id="price-board-content">
+      <div className="page-header-row" style={{ flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
         <div>
           <h1>{I18N[currentLang].priceBoardTitle}</h1>
           <p>{I18N[currentLang].priceBoardSubtitle}</p>
         </div>
-        <button className="primary-button" onClick={onNavigateCreateLot}>
-          + {I18N[currentLang].createLot}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <ExportButton
+            label={currentLang === 'hi' ? 'भाव सूची डाउनलोड' : 'Download Rates'}
+            onExportCSV={() =>
+              downloadCSV(
+                `ReVive_Price_Index_${selectedCity.replace(/[\s,]+/g, '_')}`,
+                ['Category', 'Region', 'Median Rate', 'Min Rate', 'Max Rate', 'Sample Count'],
+                benchmarkExportRows
+              )
+            }
+            onExportXLSX={() =>
+              downloadXLSX(
+                `ReVive_Price_Index_${selectedCity.replace(/[\s,]+/g, '_')}`,
+                'Live_Rates',
+                ['Category', 'Region', 'Median Rate', 'Min Rate', 'Max Rate', 'Sample Count'],
+                benchmarkExportRows
+              )
+            }
+            onExportJPG={() =>
+              downloadElementAsJPG(
+                'price-board-content',
+                `ReVive_Price_Board_${selectedCity.replace(/[\s,]+/g, '_')}`,
+                `ReVive Live Price Board - ${selectedCity}`
+              )
+            }
+          />
+          <button className="primary-button" onClick={onNavigateCreateLot}>
+            + {I18N[currentLang].createLot}
+          </button>
+        </div>
       </div>
 
       {/* City Filter Strip */}
