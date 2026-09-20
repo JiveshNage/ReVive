@@ -1,235 +1,261 @@
-# ReVive — Giving E-Waste a Second Life
-
 <div align="center">
 
-![ReVive Logo](logo.jpeg)
+<img src="logo.jpeg" alt="ReVive logo" width="140" />
 
-### **Smart India Hackathon 2026 | Problem Statement SIH26229: Kabadiwala Connect**
-**Bringing India's Informal Waste Collectors into the Formal, Safe, and Profitable Circular Economy**
+# ReVive — Giving E-Waste a Second Life
 
-[![Backend Pytest Suite](https://img.shields.io/badge/Pytest-55%2F55%20Passed%20(100%25)-brightgreen.svg?style=for-the-badge&logo=pytest)](file:///d:/ReVive/backend/tests)
-[![Web Production Build](https://img.shields.io/badge/Web%20Build-Vite%20Passing%20(0%20errors)-blue.svg?style=for-the-badge&logo=vite)](file:///d:/ReVive/web/)
-[![Mobile Test Suite](https://img.shields.io/badge/Flutter-13%2F13%20Passed-teal.svg?style=for-the-badge&logo=flutter)](file:///d:/ReVive/mobile/test/)
-[![Languages](https://img.shields.io/badge/Languages-Hindi%20%7C%20Marathi%20%7C%20English-orange.svg?style=for-the-badge)](file:///d:/ReVive/web/src/App.tsx)
-[![Compliance](https://img.shields.io/badge/Compliance-CPCB%20E--Waste%20Rules%202022-darkgreen.svg?style=for-the-badge)](file:///d:/ReVive/docs/SIH26229_COMPLIANCE.md)
-[![License](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](file:///d:/ReVive/LICENSE)
+**Bringing India's informal waste collectors into the formal, safe, and profitable circular economy**
 
-[**Live Demo Guide**](docs/SIH_DEMO.md) • [**System Architecture**](ReVive_Architecture.drawio) • [**API Docs (Swagger)**](http://127.0.0.1:8001/docs) • [**Compliance Matrix**](docs/SIH26229_COMPLIANCE.md)
+Smart India Hackathon 2026 · Problem Statement **SIH26229 — Kabadiwala Connect**
+
+[![Backend Pytest Suite](https://img.shields.io/badge/Pytest-55%2F55%20Passed%20(100%25)-brightgreen.svg?style=for-the-badge&logo=pytest)](backend/tests)
+[![Web Production Build](https://img.shields.io/badge/Web%20Build-Vite%20Passing%20(0%20errors)-blue.svg?style=for-the-badge&logo=vite)](web/)
+[![Mobile Test Suite](https://img.shields.io/badge/Flutter-13%2F13%20Passed-teal.svg?style=for-the-badge&logo=flutter)](mobile/test/)
+[![Languages](https://img.shields.io/badge/Languages-Hindi%20%7C%20Marathi%20%7C%20English-orange.svg?style=for-the-badge)](web/src/App.tsx)
+[![Compliance](https://img.shields.io/badge/Compliance-CPCB%20E--Waste%20Rules%202022-darkgreen.svg?style=for-the-badge)](docs/SIH26229_COMPLIANCE.md)
+[![License](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](LICENSE)
+
+[**Quickstart**](#11-quickstart) · [**Judge Demo**](#9-one-click-demo-for-judges) · [**Architecture**](#6-system-architecture) · [**Demo Guide**](docs/SIH_DEMO.md) · [**Compliance Matrix**](docs/SIH26229_COMPLIANCE.md) · [**API Docs (local)**](http://127.0.0.1:8001/docs)
 
 </div>
 
 ---
 
-## 🌟 Table of Contents
-1. [What is ReVive in 60 Seconds?](#-1-what-is-revive-in-60-seconds)
-2. [The Real Problem in India](#-2-the-real-problem-in-india)
-3. [The ReVive Solution: Empowering, Not Replacing](#-3-the-revive-solution-empowering-not-replacing)
-4. [Follow an E-Waste Item: The 7-Step Journey](#-4-follow-an-e-waste-item-the-7-step-journey)
-5. [The 3 User Experiences](#-5-the-3-user-experiences)
-6. [End-to-End System Architecture](#-6-end-to-end-system-architecture)
-7. [Core Technical Innovations (Explained Simply)](#-7-core-technical-innovations-explained-simply)
-8. [The ReVive Difference (Before vs. After)](#-8-the-revive-difference-before-vs-after)
-9. [1-Click Live SIH Demo Simulator (For Judges & Evaluators)](#-9-1-click-live-sih-demo-simulator-for-judges--evaluators)
-10. [Test & Validation Evidence (100% Green)](#-10-test--validation-evidence-100-green)
-11. [Quickstart Guide: Run ReVive Locally in 3 Minutes](#-11-quickstart-guide-run-revive-locally-in-3-minutes)
-12. [Repository Directory Structure](#-12-repository-directory-structure)
-13. [Complete Documentation Hub](#-13-complete-documentation-hub)
+## At a Glance
+
+| | |
+|:---|:---|
+| **The gap we close** | Collectors are paid ₹25–35/kg for circuit boards worth ₹400–550/kg in recoverable material |
+| **Who it serves** | Informal collectors (mobile), authorized recyclers (web), CPCB / EPR regulators (web) |
+| **How it works** | Snap → AI classify → fair price → recycler match → OTP handover → cash/UPI → tamper-evident passport |
+| **Built for the field** | Voice guidance in Hindi, Marathi, English · fully offline intake · cash-first accounting |
+| **Verified** | 55 backend tests + 13 mobile tests passing · web build with 0 TypeScript errors |
+| **See it live** | One API call runs the entire lifecycle in under 2 seconds ([jump to demo](#9-one-click-demo-for-judges)) |
 
 ---
 
-## ⚡ 1. What is ReVive in 60 Seconds?
+## Table of Contents
 
-**ReVive** is an AI-powered, offline-first digital platform built for **Smart India Hackathon 2026** to solve one of India's toughest environmental and social challenges: **E-Waste**.
-
-Instead of trying to replace informal waste pickers (*kabadiwalas*) with complex corporate systems, ReVive gives them **superpowers**:
-- 📱 **A simple mobile app with voice guidance in Hindi, Marathi, and English** for low-literacy users.
-- 📶 **Offline operation** that saves intake drafts in cellular dead zones and syncs automatically when network returns.
-- 🧠 **Smartphone AI vision** that instantly identifies complex electronic scrap.
-- 📊 **Transparent, fair local pricing** based on 7,652 verified market data points.
-- 🤝 **A 5-pillar matching engine** that connects collectors directly with government-authorized recyclers.
-- ⚖️ **A dual-OTP physical scale verification** that prevents fraud and weight cheating.
-- 💵 **Instant cash or UPI settlement** recorded in a transparent ledger.
-- 🛡️ **A tamper-evident Digital Recycling Passport** (`REV-2026-LOT-XXXX`) sealed with SHA-256 cryptographic hashing to prove statutory compliance for India's Extended Producer Responsibility (EPR) regulations.
-
----
-
-## 🚨 2. The Real Problem in India
-
-India generates over **1.75 million tonnes of e-waste** every year, ranking 3rd globally. Yet:
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                           THE BROKEN CHAIN                               │
-│                                                                          │
-│  [Informal Kabadiwalas]       [Predatory Middlemen]     [Hazardous Yards]│
-│  Collects 95% of E-Waste  ──> Pays Unfair Low Rates ──> Cable Burning    │
-│  No price information         (₹25-35/kg for PCB)       Acid Leaching    │
-│                                                         Poisoned Lungs   │
-│                                                                          │
-│  [Authorized Recyclers]                                                  │
-│  Government-certified    <── Starved of Supply (<30% Capacity Utilization)│
-│  Safe high-yield recovery                                                │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-1. **Extreme Price Exploitation**: Informal collectors handle **95% of all e-waste in India**. Because they don't know the true value of printed circuit boards (rich in gold, copper, and palladium), middlemen buy them for a flat ₹25–35/kg when their true material recovery value is ₹400–550/kg.
-2. **Deadly Backyard Processing**: Lacking access to formal smelters, collectors burn PVC cables over open flame and submerge circuit boards in acid baths to extract copper and gold, destroying their lungs and contaminating groundwater.
-3. **The Recycler Paradox**: Government-authorized recyclers with modern, safe, high-yield recycling equipment operate at **less than 30% capacity** because they have no formal pipeline to collect scrap from neighborhoods.
+1. [What is ReVive in 60 Seconds?](#1-what-is-revive-in-60-seconds)
+2. [The Real Problem in India](#2-the-real-problem-in-india)
+3. [The ReVive Solution: Empowering, Not Replacing](#3-the-revive-solution-empowering-not-replacing)
+4. [Follow an E-Waste Item: The 7-Step Journey](#4-follow-an-e-waste-item-the-7-step-journey)
+5. [The Three User Experiences](#5-the-three-user-experiences)
+6. [System Architecture](#6-system-architecture)
+7. [Core Technical Innovations](#7-core-technical-innovations)
+8. [Before vs. After](#8-before-vs-after)
+9. [One-Click Demo for Judges](#9-one-click-demo-for-judges)
+10. [Tests and Performance Evidence](#10-tests-and-performance-evidence)
+11. [Quickstart](#11-quickstart)
+12. [Repository Structure](#12-repository-structure)
+13. [Documentation Hub](#13-documentation-hub)
+14. [Roadmap](#14-roadmap)
+15. [Team, License and Acknowledgements](#15-team-license-and-acknowledgements)
 
 ---
 
-## 💡 3. The ReVive Solution: Empowering, Not Replacing
+## 1. What is ReVive in 60 Seconds?
 
-Previous startup apps failed because they attempted to cut out the *kabadiwala* using "Uber for trash" models. They ignored the fundamental realities of the informal economy: **waste pickers require immediate daily cash, operate in offline alleys, and cannot read dense English menus**.
+**ReVive** is an AI-assisted, offline-first platform that connects India's informal e-waste collectors (*kabadiwalas*) to government-authorized recyclers. Rather than replacing collectors with a corporate system, ReVive gives them better tools:
 
-**ReVive was engineered specifically around how informal collectors actually work:**
-- **Voice First**: Illiterate collectors tap `🔊 भाव सुनें` to hear current market rates spoken aloud in their native language.
-- **Offline First**: Full functionality even in underground basements, scrap yards, and rural outskirts.
-- **Cash First**: Full digital accounting for both cash and UPI transactions—no forced banking friction.
-- **Dignity & Formalization**: Every completed handover builds a verifiable formal reputation score, unlocking institutional micro-loans and government welfare schemes.
+- 📱 **Voice-guided mobile app** in Hindi, Marathi, and English for low-literacy users
+- 📶 **Offline operation** — intake drafts are saved on the device and sync automatically when the network returns
+- 🧠 **Smartphone AI vision** that identifies electronic scrap from a photo
+- 📊 **Transparent local pricing** benchmarked on 7,652 Indian market data points, with a "Why this price?" breakdown
+- 🤝 **5-pillar matching engine** that routes scrap to CPCB-authorized recyclers
+- ⚖️ **OTP + calibrated-scale handover** that guards against identity fraud and weight manipulation
+- 💵 **Instant cash or UPI settlement** recorded in a transparent ledger
+- 🛡️ **Digital Recycling Passport** (`REV-2026-LOT-XXXX`) sealed with SHA-256, giving brands and regulators auditable proof for Extended Producer Responsibility (EPR) reporting
 
 ---
 
-## 🔄 4. Follow an E-Waste Item: The 7-Step Journey
+## 2. The Real Problem in India
 
-Here is exactly how a 25 kg lot of printed circuit boards moves through ReVive from street intake to certified smelter:
+India generates over **1.75 million tonnes** of e-waste every year and ranks 3rd globally. Yet the collection chain is broken at every link:
 
-```
- ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐
- │                                   THE COMPLETE REVIVE LIFECYCLE                                       │
- └───────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-  [ 1. SNAP & WEIGH ]       Collector snaps photo on smartphone; inputs initial scale weight (25 kg).
-          │
-          ▼
-  [ 2. AI CLASSIFY ]        PyTorch Edge AI identifies "Printed Circuit Board (PCB)" with 88% confidence;
-                            displays hazard advisory: "तेजाब से सोना मत निकालो! गैस फेफड़ों को जलाती है".
-          │
-          ▼
-  [ 3. FAIR VALUATION ]     Dynamic engine calculates fair rate (₹403/kg in Bhopal); shows transparent breakdown:
-                            Base Median ₹380 + Local Demand Bonus + Bulk Bonus. Total: ₹10,075.
-          │
-          ▼
-  [ 4. 5-PILLAR MATCH ]     Ranks CPCB-authorized recyclers using 5 factors (Material, Price, Distance, Capacity, CPCB);
-                            matches nearest licensed facility 6.8 km away.
-          │
-          ▼
-  [ 5. OTP HANDOVER ]       Collector generates time-limited 6-digit OTP (e.g. 849201, 15 min expiry);
-                            Recycler arrives for pickup and enters OTP to unlock digital scale session.
-          │
-          ▼
-  [ 6. SCALE & PAY ]        Recycler re-weighs on calibrated scale (24.8 kg within ±5% tolerance);
-                            Hands over instant cash payment of ₹9,994; logged with signed voucher.
-          │
-          ▼
-  [ 7. DIGITAL PASSPORT ]   System generates immutable passport (REV-2026-LOT-1024) with SHA-256 seal:
-                            Records 35.2 kg CO₂ saved and 2.9 kg toxic heavy metals diverted for CPCB EPR audit.
+```mermaid
+flowchart LR
+    A["Informal kabadiwalas<br/>collect ~95% of e-waste<br/>no price information"] -->|"sold at ₹25–35/kg"| B["Middlemen<br/>and backyard yards"]
+    B --> C["Open cable burning<br/>acid leaching<br/>toxic exposure"]
+    D["CPCB-authorized recyclers<br/>safe, high-yield recovery"] -.->|"starved of supply<br/>under 30% capacity"| B
 ```
 
----
+1. **Price exploitation.** Informal collectors handle ~95% of India's e-waste. Because they can't see true market value, middlemen buy printed circuit boards (rich in gold, copper, and palladium) at ₹25–35/kg when their material recovery value is ₹400–550/kg.
+2. **Deadly backyard processing.** Without access to formal smelters, cables are burned in the open and boards are dunked in acid baths. That damages lungs and contaminates groundwater.
+3. **The recycler paradox.** Authorized recyclers with safe, modern equipment run at **under 30% capacity** because they lack a formal pipeline to neighborhood scrap.
 
-## 👥 5. The 3 User Experiences
-
-ReVive unites all three critical stakeholders on a single unified platform:
-
-### 📱 A. The Informal Collector (Kabadiwala) — Mobile App
-*Designed for accessibility, low literacy, and zero-connectivity environments.*
-- **Vernacular Audio Assistance**: One-tap text-to-speech reads market rates in Hindi (*हिंदी*), Marathi (*मराठी*), and English.
-- **Zero-Friction Scrap Intake**: Snap a picture, select weight, and auto-detect city GPS.
-- **Offline Draft Vault**: Save scrap lots locally; auto-syncs to the server when cell service is restored.
-- **Daily Earnings Ledger**: Clear summary of today's cash earnings, pending pickups, and verified transaction receipts.
-- **Collector Formalization Badge**: Earns formalization credentials (e.g., *Verified Gold Collector*) to build creditworthiness.
-
-### 💻 B. The Authorized Recycler (Smelter) — Web Workstation
-*Designed for high-throughput procurement, logistics scheduling, and compliance.*
-- **Scrap Radar Map**: Real-time spatial map showing nearby available e-waste lots with material and quantity filters.
-- **Competitive Bidding & Offers**: Submit competitive pickup offers with transparent doorstep collection scheduling.
-- **Calibrated Scale Terminal**: Re-weigh scrap at the doorstep, verify weight within strict $\pm 5\%$ tolerance, and capture digital sign-offs.
-- **Instant Voucher Payout**: Record cash payouts or paste UPI reference IDs (UTR) directly into the tamper-proof ledger.
-
-### 🏛️ C. The Regulator & Enterprise Admin (CPCB / EPR) — Governance Portal
-*Designed for statutory oversight, licensing audits, and environmental ESG reporting.*
-- **CPCB License Verification**: Audit uploaded statutory recycling licenses with file-type magic byte validation.
-- **National Traceability Master Ledger**: Search and inspect the full chain of custody for any e-waste lot in India.
-- **E-Waste Digital Passport Inspection**: Verify cryptographic SHA-256 certificate hashes to ensure zero tampering.
-- **Extended Producer Responsibility (EPR) Reporting**: Export audit-ready CSV/JPG certificates quantifying exact kilograms of $\text{CO}_2$ emissions avoided and toxic heavy metals diverted from landfills.
+<!-- TODO: add source citations for the 1.75 Mt, ~95% informal share, and ₹ price ranges (e.g. CPCB annual report, UN Global E-waste Monitor, DATA_PROVENANCE.md). -->
 
 ---
 
-## 🏗️ 6. End-to-End System Architecture
+## 3. The ReVive Solution: Empowering, Not Replacing
 
-ReVive's architecture is strictly grounded in the actual codebase, organized into 4 operational tiers:
+Earlier "Uber for trash" apps tried to cut the *kabadiwala* out and stalled, because they ignored how the informal economy actually works: collectors need same-day cash, work in offline alleys, and can't navigate dense English menus. ReVive is built around those realities:
+
+| Principle | In practice |
+|:---|:---|
+| **Voice-first** | Tap `🔊 भाव सुनें` to hear today's market rates read aloud in Hindi, Marathi, or English |
+| **Offline-first** | Full intake flow works in basements, scrap yards, and rural outskirts |
+| **Cash-first** | Cash and UPI are both first-class — no forced banking friction |
+| **Dignity and formalization** | Every completed handover builds a verifiable reputation score that can unlock micro-loans and welfare schemes |
+
+---
+
+## 4. Follow an E-Waste Item: The 7-Step Journey
+
+This is how a 25 kg lot of printed circuit boards moves from street intake to a certified facility:
+
+```mermaid
+flowchart TD
+    S1["1 · SNAP AND WEIGH<br/>Photo + initial scale weight"] --> S2["2 · AI CLASSIFY<br/>PCB detected, hazard advisory shown"]
+    S2 --> S3["3 · FAIR VALUATION<br/>Regional rate with factor breakdown"]
+    S3 --> S4["4 · 5-PILLAR MATCH<br/>Nearest authorized recycler ranked"]
+    S4 --> S5["5 · OTP HANDOVER<br/>6-digit single-use code, 15 min expiry"]
+    S5 --> S6["6 · SCALE AND PAY<br/>Recycler re-weighs, pays cash or UPI"]
+    S6 --> S7["7 · DIGITAL PASSPORT<br/>SHA-256 sealed record + ESG impact"]
+```
+
+**Worked example (Bhopal, 25 kg PCB lot):**
+
+| Step | What happens | Result |
+|:---:|:---|:---|
+| 1 | Collector photographs the lot and enters the scale weight | 25 kg |
+| 2 | Classifier identifies a *Printed Circuit Board* and warns in Hindi: *"तेजाब से सोना मत निकालो! गैस फेफड़ों को जलाती है"* | 88.5% confidence |
+| 3 | Valuation engine applies regional demand and bulk factors to the ₹380/kg base median | ₹403/kg → ₹10,075 |
+| 4 | Matching engine ranks authorized recyclers on 5 factors | Nearest licensed facility, 6.8 km |
+| 5 | Collector generates a single-use OTP; recycler enters it on arrival to open the scale session | e.g. `849201` |
+| 6 | Recycler re-weighs on a calibrated scale and pays | 24.8 kg (−0.8%, within ±5%) → ₹9,994 |
+| 7 | System seals the passport and computes ESG impact | `REV-2026-LOT-1024` · 35.7 kg CO₂ avoided · 2.98 kg toxic metals diverted |
+
+---
+
+## 5. The Three User Experiences
+
+ReVive brings all three stakeholders onto one platform.
+
+### 📱 A. The Informal Collector — Mobile App (Flutter)
+*Built for accessibility, low literacy, and zero-connectivity environments.*
+
+- **Vernacular audio:** one-tap text-to-speech for market rates in Hindi (*हिंदी*), Marathi (*मराठी*), and English
+- **Zero-friction intake:** snap a photo, confirm the weight, auto-detect city via GPS
+- **Offline draft vault:** lots are stored locally and sync when service returns
+- **Daily earnings ledger:** today's cash earnings, pending pickups, and verified receipts
+- **Formalization badges:** credentials such as *Verified Gold Collector* that build creditworthiness
+
+### 💻 B. The Authorized Recycler — Web Workstation (React)
+*Built for high-throughput procurement, logistics, and compliance.*
+
+- **Scrap Radar map:** live map of nearby lots with material and quantity filters
+- **Competitive offers:** submit pickup offers with doorstep collection scheduling
+- **Calibrated scale terminal:** re-weigh at the doorstep, enforce the ±5% tolerance, capture digital sign-off
+- **Instant voucher payout:** record cash or paste the UPI reference (UTR) directly into the tamper-proof ledger
+
+### 🏛️ C. The Regulator and Enterprise Admin — Governance Portal (React)
+*Built for statutory oversight, licensing audits, and ESG reporting.*
+
+- **CPCB license verification:** audit uploaded recycling licenses, with file-type validation by magic bytes
+- **National traceability ledger:** search the full chain of custody for any lot
+- **Passport inspection:** verify SHA-256 certificate hashes to detect tampering
+- **EPR reporting:** export audit-ready CSV/JPG certificates quantifying CO₂ avoided and toxic metals diverted from landfill
+
+---
+
+## 6. System Architecture
+
+ReVive is organized into four operational tiers:
 
 <div align="center">
 
 ![ReVive System Architecture](ReVive_Architecture.png)
 
-*Figure: Complete ReVive System Architecture (Generated in Draw.io / mxGraph format).*  
-*Open and edit the native vector source: [`ReVive_Architecture.drawio`](file:///d:/ReVive/ReVive_Architecture.drawio)*
+*Complete system architecture. Editable vector source: [`ReVive_Architecture.drawio`](ReVive_Architecture.drawio) · Interactive viewer: [`ReVive_Architecture.html`](ReVive_Architecture.html)*
 
 </div>
 
-### Architectural Tiers Summary:
-
-| Tier | Technology Stack | Key Responsibilities |
+| Tier | Technology | Key responsibilities |
 |:---|:---|:---|
-| **1. Client & Presentation** | **Flutter (Dart)** + **React 18 / Vite (TypeScript)** | Mobile field app with vernacular TTS and camera intake; Web portal with scrap radar, bidding, calibrated scale, and admin audit dashboard. |
-| **2. Offline-First & API** | **FastAPI (Python 3.12)** + **`shared_preferences`** | Resilient 4-stage queue (`LOCAL_CREATED` $\rightarrow$ `PENDING_SYNC` $\rightarrow$ `SERVER_VALIDATING` $\rightarrow$ `SYNCED`), JWT token auth, RBAC, and REST endpoints. |
-| **3. Intelligence & Matching** | **PyTorch (MobileNetV3 / SmallCNN)** + **Haversine Geo** | 15-class e-waste computer vision classifier with tiered confidence gating; regional dynamic pricing across 7,652 points; 5-pillar recycler ranking. |
-| **4. Trust, Security & Data** | **PostgreSQL 16 / SQLite** + **SHA-256 Cryptography** | 8 relational tables with ACID transactions; single-use 6-digit OTPs; CPCB statutory license gatekeeper; tamper-evident digital passports (`REV-2026-LOT-XXXX`). |
+| **1. Client and Presentation** | Flutter (Dart) · React 18 + Vite (TypeScript) | Mobile field app with vernacular TTS and camera intake; web portal with scrap radar, offers, calibrated scale, and admin audit dashboard |
+| **2. Offline-First and API** | FastAPI (Python 3.12) · `shared_preferences` | 4-stage sync queue, JWT auth, role-based access control (RBAC), REST endpoints |
+| **3. Intelligence and Matching** | PyTorch (MobileNetV3 / SmallCNN) · Haversine geo | 15-class e-waste classifier with tiered confidence gating; regional pricing over 7,652 data points; 5-pillar recycler ranking |
+| **4. Trust, Security and Data** | PostgreSQL 16 / SQLite · SHA-256 | 8 relational tables with ACID transactions; single-use 6-digit OTPs; CPCB license gatekeeper; tamper-evident passports |
 
 ---
 
-## 🧠 7. Core Technical Innovations (Explained Simply)
+## 7. Core Technical Innovations
 
-### 1. 👁️ Assistive Edge AI Vision (PyTorch)
-- **What it does**: When a collector points their phone camera at an unlabelled electronic component, our neural network (`ewaste_classifier.pt`) identifies what it is in under 400 milliseconds.
-- **Covered Classes**: Printed Circuit Boards (PCB), Batteries, Lithium-Ion Cells, Copper Wires, Mobile Phones, Keyboards, Mice, Monitors, Microwaves, Printers, Washing Machines, and scrap metals.
-- **Tiered Confidence Gating (SIH Specification)**:
-  - **$\ge 80\%$ (High Confidence)**: Strong auto-suggestion and auto-advance.
-  - **$50\% - 80\%$ (Medium Confidence)**: Displays candidate category with visual confirmation prompt.
-  - **$< 50\%$ (Low Confidence)**: Mandatory manual selection to guarantee data integrity.
+### 7.1 👁️ Assistive AI Vision (PyTorch)
 
-### 2. 📊 Regional Dynamic Valuation & "Why This Price?"
-- **The Problem**: Scrap prices fluctuate significantly across Indian states (e.g., circuit board rates in Bhopal vs. Pune vs. Delhi).
-- **The Engine**: Indexed across 7,652 real Indian scrap market points (`price_dataset_india_locations.csv`).
-- **The Math**:
-  $$\text{Suggested Payout} = \text{Base Rate (Median)} \times (1 + \text{Demand Index}) \times (1 + \text{Bulk Bonus}) \times \text{Weight (kg)}$$
-- **Explainability**: ReVive displays a clear breakdown:
-  - *Base Market Median*: ₹ 380/kg
-  - *Regional Smelter Demand*: +2% (+₹ 8/kg)
-  - *Bulk Volume Incentive ($\ge 5\text{ kg}$)*: +1.5% (+₹ 6/kg)
-  - *7-Day Historical Trend Curve*: Visual indicator showing whether prices are rising or falling.
+Point the phone at an unlabelled component and the classifier (`ewaste_classifier.pt`) names it in **under 400 ms** (370 ms measured).
 
-### 3. 📍 5-Pillar Multi-Criteria Recycler Matching
-Rather than just sorting by nearest distance, ReVive evaluates authorized recyclers using a composite multi-factor score:
+- **Classes covered (15):** printed circuit boards, batteries, lithium-ion cells, copper wire, mobile phones, keyboards, mice, monitors, microwaves, printers, washing machines, and scrap metals
+- **Tiered confidence gating:**
 
-$$\text{Composite Score} = 0.40 \cdot C_{\text{material}} + 0.25 \cdot S_{\text{rate}} + 0.15 \cdot S_{\text{distance}} + 0.10 \cdot S_{\text{capacity}} + 0.10 \cdot S_{\text{compliance}}$$
+| Confidence | Behavior |
+|:---|:---|
+| **≥ 80%** (high) | Strong suggestion, auto-advance |
+| **50–80%** (medium) | Shows the candidate category with a visual confirmation prompt |
+| **< 50%** (low) | Mandatory manual selection, protecting data integrity |
 
-1. **Material Compatibility (40%)**: Recycler is certified to process this specific scrap type.
-2. **Offered Scrap Rate (25%)**: Quoted payout per kg benchmarked against fair market median.
-3. **Haversine Distance (15%)**: Real-world great-circle distance calculated from Indian city coordinates.
-4. **Logistics & Capacity (10%)**: Daily processing headroom and doorstep pickup availability.
-5. **Statutory CPCB Compliance (10%)**: Active state pollution control board authorization status.
+### 7.2 📊 Regional Dynamic Valuation and "Why This Price?"
 
-### 4. 📶 Offline-First Synchronization Engine
-Informal waste collection happens in basements, alleys, and rural scrap yards with zero 4G/5G connectivity.
-- Intake forms and photos are saved immediately in local persistent storage (`shared_preferences` / SQLite).
-- State machine tracks progression: `LOCAL_CREATED` $\rightarrow$ `PENDING_SYNC` $\rightarrow$ `SYNCED`.
-- When connectivity is restored, the client performs a background multipart POST to `/api/lots` with SHA-256 payload checksums, ensuring zero data loss and preventing duplicate submissions.
+Scrap rates vary sharply across Indian states (circuit boards in Bhopal vs. Pune vs. Delhi). The engine indexes 7,652 regional data points from `dataset/price_dataset_india_locations.csv` (methodology in [DATA_PROVENANCE.md](docs/DATA_PROVENANCE.md)).
 
-### 5. 🔐 Dual-OTP Handover & $\pm 5\%$ Scale Reconciliation
-- **The Problem**: Disputes between collectors and buyers regarding identity, theft, and manipulated scales.
-- **The Protocol**:
-  1. Collector generates a **single-use 6-digit OTP** valid for 15 minutes.
-  2. Recycler enters the OTP on their mobile/web terminal to start the handover.
-  3. Recycler enters the calibrated scale reading.
-  4. If the physical weight deviates by more than **$\pm 5\%$** from initial intake weight, an automated discrepancy warning is flagged in the audit log.
+$$\text{Payout} = \text{Base Median Rate} \times (1 + \text{Demand Index}) \times (1 + \text{Bulk Bonus}) \times \text{Weight (kg)}$$
 
-### 6. 🛡️ Immutable SHA-256 Digital Recycling Passport
-Every finalized scrap transaction generates an official, tamper-evident digital certificate:
+Every quote comes with an explanation the collector can hear or read:
+
+| Factor | Example |
+|:---|:---|
+| Base market median | ₹380/kg |
+| Regional smelter demand | +2% |
+| Bulk volume incentive (≥ 5 kg) | +1.5% |
+| 7-day trend curve | Rising / falling indicator |
+
+<!-- TODO: reconcile this example with the ₹403/kg used in Section 4 and the demo (380 × 1.02 × 1.015 ≈ ₹393/kg). -->
+
+### 7.3 📍 5-Pillar Multi-Criteria Recycler Matching
+
+Rather than sorting by distance alone, ReVive scores each authorized recycler on five weighted factors:
+
+$$\text{Score} = 0.40\,S_{\text{material}} + 0.25\,S_{\text{rate}} + 0.15\,S_{\text{distance}} + 0.10\,S_{\text{capacity}} + 0.10\,S_{\text{compliance}}$$
+
+| Pillar | Weight | What it measures |
+|:---|:---:|:---|
+| Material compatibility | 40% | Is the recycler certified for this scrap type? |
+| Offered rate | 25% | Quoted ₹/kg against the fair market median |
+| Distance | 15% | Great-circle (Haversine) distance from city coordinates |
+| Logistics and capacity | 10% | Daily processing headroom and doorstep pickup |
+| CPCB compliance | 10% | Active state pollution control board authorization |
+
+### 7.4 📶 Offline-First Sync Engine
+
+Collection happens where 4G doesn't reach. Intake forms and photos are written to local persistent storage first, then move through a four-stage state machine:
+
+```mermaid
+stateDiagram-v2
+    [*] --> LOCAL_CREATED : draft saved on device
+    LOCAL_CREATED --> PENDING_SYNC : queued for upload
+    PENDING_SYNC --> SERVER_VALIDATING : connectivity restored
+    SERVER_VALIDATING --> SYNCED : checksum verified
+    SYNCED --> [*]
+```
+
+On reconnect, the client sends a background multipart `POST /api/lots` carrying a SHA-256 payload checksum, which prevents data loss and duplicate submissions.
+
+### 7.5 🔐 OTP and Calibrated-Scale Dual Verification
+
+Disputes over identity, theft, and rigged scales are the norm in informal trade. The handover protocol closes both gaps:
+
+1. The collector generates a **single-use 6-digit OTP**, valid for **15 minutes**.
+2. The recycler enters the OTP to open the handover session (proves the right buyer, in person).
+3. The recycler enters the calibrated scale reading (proves the weight).
+4. If the weight deviates more than **±5%** from the intake weight, a discrepancy warning is written to the audit log.
+
+### 7.6 🛡️ Tamper-Evident SHA-256 Digital Recycling Passport
+
+Every completed transaction produces a certificate whose hash covers every material field:
+
 ```python
-# Standardized Cryptographic Hash Calculation
 hash_payload = (
     f"lot:{lot_id}|collector:{collector_id}|material:{material_name}|"
     f"init_qty:{qty_kg}|final_weight:{verified_weight}|price:{payout}|"
@@ -237,41 +263,45 @@ hash_payload = (
 )
 certificate_hash = hashlib.sha256(hash_payload.encode("utf-8")).hexdigest()
 ```
-- Standardized ID: `REV-2026-LOT-XXXX`
-- Any tampering with weights, prices, or dates immediately breaks the hash validation.
-- Generates a pure SVG QR code scannable by police, municipal ward officers, or CPCB inspectors to view the complete chain of custody and real ESG impact ($1.44\text{ kg CO}_2$ and $0.12\text{ kg}$ toxic metals saved per kg of PCB recycled).
+
+- **ID format:** `REV-2026-LOT-XXXX`
+- **Tamper detection:** changing a weight, price, or party breaks the hash
+- **QR verification:** a pure-SVG QR code lets police, ward officers, or CPCB inspectors view the chain of custody
+- **ESG math:** every kg of PCB recycled records **1.44 kg CO₂** avoided and **0.12 kg** toxic metals diverted
 
 ---
 
-## ⚖️ 8. The ReVive Difference (Before vs. After)
+## 8. Before vs. After
 
-| Metric / Dimension | The Traditional Informal Sector | With ReVive (SIH 2026) |
+| Dimension | Traditional informal sector | With ReVive |
 |:---|:---|:---|
-| **Pricing Transparency** | Arbitrary flat rate (₹25–35/kg) dictated by middlemen | Indexed market rate (₹400–550/kg) with "Why This Price?" factor breakdown |
-| **Literacy Barrier** | Complex paperwork; waste pickers excluded | Voice-first audio in **Hindi**, **Marathi**, and **English** |
-| **Network Reliability** | Fails in rural or low-connectivity scrap yards | **Offline-first**: local queue drafts survive app kill & power loss |
-| **Processing Safety** | Open cable burning & backyard toxic acid leaching | **CPCB Gatekeeper**: scrap routed 100% to authorized formal facilities |
-| **Handover Security** | Verbal agreements prone to cheating and theft | **6-digit dynamic OTP** + **$\pm 5\%$ scale verification** |
-| **Payment Method** | Predatory delays or unrecorded cash transactions | **Instant cash or UPI** recorded with signed digital receipts |
-| **Regulatory Paper Trail**| Zero traceability; impossible EPR tracking | **SHA-256 Digital Passport** with auditable ESG carbon math |
+| **Pricing** | Arbitrary flat rate (₹25–35/kg) set by middlemen | Indexed market rate (₹400–550/kg) with a "Why this price?" breakdown |
+| **Literacy** | Paperwork excludes waste pickers | Voice-first audio in Hindi, Marathi, and English |
+| **Connectivity** | Fails in low-signal scrap yards | Offline-first; drafts survive app kill and power loss |
+| **Safety** | Open burning and backyard acid leaching | CPCB gatekeeper routes scrap to authorized facilities |
+| **Handover security** | Verbal agreements, cheating, theft | Single-use OTP + ±5% calibrated-scale check |
+| **Payment** | Delayed or unrecorded cash | Instant cash or UPI with signed digital receipts |
+| **Paper trail** | No traceability, EPR tracking impossible | SHA-256 passport with auditable ESG math |
+| **Collector income** | Baseline | +38% modeled uplift ([UNIT_ECONOMICS.md](docs/UNIT_ECONOMICS.md)) |
 
 ---
 
-## 🎯 9. 1-Click Live SIH Demo Simulator (For Judges & Evaluators)
+## 9. One-Click Demo for Judges
 
-ReVive includes a dedicated automated simulation runner designed specifically for hackathon judges and evaluators to witness the entire 7-step lifecycle executed live in under **2 seconds**.
+A built-in simulator runs the full 7-step lifecycle live, end to end, in under 2 seconds.
 
-### How to Run the 1-Click Demo:
+**Run it:**
 
-1. Start the backend server (`http://127.0.0.1:8001`).
-2. Open Swagger UI at: `http://127.0.0.1:8001/docs`.
-3. Locate **`POST /api/demo/run-workflow`** and click **"Try it out" $\rightarrow$ "Execute"**.
-4. Or trigger it via PowerShell/cURL:
-   ```bash
-   curl -X POST http://127.0.0.1:8001/api/demo/run-workflow
-   ```
+1. Start the backend (see [Quickstart](#11-quickstart)) at `http://127.0.0.1:8001`.
+2. Open Swagger UI at `http://127.0.0.1:8001/docs`, find **`POST /api/demo/run-workflow`**, and click **Try it out → Execute**.
+3. Or from any terminal:
 
-### What the Simulator Executes in Real Time:
+```bash
+curl -X POST http://127.0.0.1:8001/api/demo/run-workflow
+```
+
+**Sample response:**
+
 ```json
 {
   "status": "success",
@@ -282,11 +312,11 @@ ReVive includes a dedicated automated simulation runner designed specifically fo
     "Step 3: Regional Pricing Discovery (₹403/kg determined for Bhopal)",
     "Step 4: 5-Pillar Recycler Matching (EcoCycle matched 6.8 km away)",
     "Step 5: Handover Session Created & 6-Digit OTP Generated (849201)",
-    "Step 6: Scale Re-weigh & Dual Verification (24.8 kg verified within ±2.0% variance)",
+    "Step 6: Scale Re-weigh & Verification (24.8 kg, 0.8% variance, within ±5% tolerance)",
     "Step 7: Cash Payment Recorded (₹9,994) & SHA-256 Passport Sealed (REV-2026-LOT-1024)"
   ],
   "passport_id": "REV-2026-LOT-1024",
-  "certificate_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "certificate_hash": "<64-character SHA-256 hex digest>",
   "esg_impact": {
     "co2_diverted_kg": 35.71,
     "toxic_metals_diverted_kg": 2.98
@@ -294,188 +324,205 @@ ReVive includes a dedicated automated simulation runner designed specifically fo
 }
 ```
 
-*For complete step-by-step jury presentation instructions, refer to [**`docs/SIH_DEMO.md`**](file:///d:/ReVive/docs/SIH_DEMO.md).*
+For the full presentation script, see [`docs/SIH_DEMO.md`](docs/SIH_DEMO.md).
 
 ---
 
-## 🧪 10. Test & Validation Evidence (100% Green)
+## 10. Tests and Performance Evidence
 
-Every tier of ReVive is verified with comprehensive automated test suites:
+### Automated test suites
 
-```
-============================= REViVE TEST SUITE RESULTS =============================
+| Suite | Result | Coverage |
+|:---|:---|:---|
+| **Backend (pytest)** | ✅ 55 / 55 passed in 17.13 s | Auth and RBAC hardening (10) · CPCB document auditing (8) · 7-stage lot lifecycle (14) · AI, valuation, and matching (12) · Security and injection defense (11) |
+| **Web (Vite)** | ✅ 0 TypeScript errors, built in 1.54 s | 95 modules transformed into production assets |
+| **Mobile (Flutter)** | ✅ 13 / 13 passed in 2.0 s | Vernacular TTS (8) · Widget layout and navigation (5) |
+| **Architecture files** | ✅ Valid XML | `.drawio`, `.svg`, and `.png` exports |
 
-  [✔] Backend Pytest Suite:   55 / 55 tests passed (100%) in 17.13s
-      - Auth & RBAC Hardening: 10/10 passed
-      - CPCB Document Auditing: 8/8 passed
-      - 7-Stage Lot Lifecycle: 14/14 passed
-      - AI, Valuation & Matching: 12/12 passed
-      - Security & Injection Defense: 11/11 passed
+**Reproduce locally:**
 
-  [✔] Web Frontend Build:     0 TypeScript errors, Vite compiled cleanly in 1.54s
-      - 95 modules transformed, production assets bundled
-
-  [✔] Mobile Test Suite:      13 / 13 Flutter tests passed in 2.0s
-      - Vernacular TTS Audio Suite: 8/8 passed
-      - Widget Layout & Navigation: 5/5 passed
-
-  [✔] System Architecture:    Draw.io / mxGraph XML validated (100% valid XML)
-      - Native Draw.io diagram: ReVive_Architecture.drawio
-      - Scalable vector diagram: ReVive_Architecture.svg
-      - High-resolution preview: ReVive_Architecture.png
-```
-
-### Empirical Latency SLA Performance:
-| Endpoint / Pipeline | Measured Latency | Target SLA | Compliance Status |
-|:---|:---|:---|:---|
-| Vernacular Safety Advisory (`/api/safety`) | **6.13 ms** | $< 50\text{ ms}$ | ✅ **PASS (8x faster)** |
-| Cryptographic Passport (`/api/passport`) | **8.87 ms** | $< 50\text{ ms}$ | ✅ **PASS (5x faster)** |
-| Regional Pricing Engine (`/api/pricing`) | **14.36 ms** | $< 100\text{ ms}$ | ✅ **PASS (7x faster)** |
-| 5-Pillar Recycler Matching (`/api/match`) | **153.05 ms** | $< 300\text{ ms}$ | ✅ **PASS (2x faster)** |
-| PyTorch AI Scrap Classifier (`/api/ai`) | **370.20 ms** | $< 500\text{ ms}$ | ✅ **PASS (Sub-500ms)** |
-
----
-
-## 🚀 11. Quickstart Guide: Run ReVive Locally in 3 Minutes
-
-### Prerequisites
-- **Python 3.11+** or **3.12**
-- **Node.js 18+** and **npm**
-- **Flutter 3.22+** (optional, for mobile emulator/device)
-
----
-
-### Step 1: Start the FastAPI Backend
 ```bash
-# 1. Navigate to root and activate Python virtual environment
-cd d:\ReVive
-.\.venv-1\Scripts\Activate.ps1
+cd backend && python -m pytest -q     # backend
+cd web && npm run build               # web
+cd mobile && flutter test             # mobile
+```
 
-# 2. Run backend API server
+### Latency against target SLAs
+
+Measured on a local development instance; methodology in [PERFORMANCE.md](docs/PERFORMANCE.md).
+
+| Endpoint / pipeline | Measured | Target | Status |
+|:---|:---:|:---:|:---|
+| Vernacular safety advisory (`/api/safety`) | **6.13 ms** | < 50 ms | ✅ ~8× faster |
+| Digital passport (`/api/passport`) | **8.87 ms** | < 50 ms | ✅ ~5× faster |
+| Regional pricing (`/api/pricing`) | **14.36 ms** | < 100 ms | ✅ ~7× faster |
+| 5-pillar matching (`/api/match`) | **153.05 ms** | < 300 ms | ✅ ~2× faster |
+| AI scrap classifier (`/api/ai`) | **370.20 ms** | < 500 ms | ✅ sub-500 ms |
+
+---
+
+## 11. Quickstart
+
+**Prerequisites:** Python 3.11+ · Node.js 18+ with npm · Flutter 3.22+ (optional, for the mobile app)
+
+```bash
+git clone <your-repo-url> ReVive
+cd ReVive
+```
+
+### Step 1 — Start the FastAPI backend
+
+**macOS / Linux**
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r backend/requirements.txt
 python -m uvicorn app.main:app --app-dir backend --reload --port 8001
 ```
-- **Interactive Swagger Documentation**: Open [http://127.0.0.1:8001/docs](http://127.0.0.1:8001/docs)
-- **Interactive ReDoc Documentation**: Open [http://127.0.0.1:8001/redoc](http://127.0.0.1:8001/redoc)
 
----
+**Windows (PowerShell)**
+```powershell
+python -m venv .venv; .\.venv\Scripts\Activate.ps1
+pip install -r backend/requirements.txt
+python -m uvicorn app.main:app --app-dir backend --reload --port 8001
+```
 
-### Step 2: Start the Web Portal
+- Swagger UI: <http://127.0.0.1:8001/docs>
+- ReDoc: <http://127.0.0.1:8001/redoc>
+
+### Step 2 — Start the web portal
+
 ```bash
-# In a new terminal:
-cd d:\ReVive\web
+cd web
 npm install
 npm run dev
 ```
-- **Web Application**: Open [http://localhost:5173](http://localhost:5173) in any modern browser.
 
----
+Open <http://localhost:5173> in any modern browser.
 
-### Step 3: Run the Flutter Mobile App (Optional)
+### Step 3 — Run the mobile app (optional)
+
 ```bash
-# In a new terminal:
-cd d:\ReVive\mobile
+cd mobile
 flutter pub get
 flutter run
 ```
-- Select your target device (Android Emulator, Chrome, or Windows desktop).
 
----
+Choose a target: Android emulator, Chrome, or Windows desktop.
 
-### 🔑 Pre-Seeded Demonstration Accounts
+### Pre-seeded demo accounts
 
-| Role | Demo Name | Phone Number | Password | Default View |
+| Role | Name | Phone | Password | What you'll see |
 |:---|:---|:---|:---|:---|
-| **Informal Collector** | Ramesh Yadav | `9876543210` | `demo1234` | Hindi Voice, Intake Camera, Offline Queue, Cash Ledger |
-| **Authorized Recycler** | Rajesh Sharma (EcoCycle) | `9123456780` | `demo1234` | Scrap Radar Map, Bidding, Calibrated Scale Handover |
-| **CPCB / Admin** | Central Directorate | `9998887770` | `demo1234` | KYC Document Review, Master Ledger, EPR Passport Audit |
+| **Informal Collector** | Ramesh Yadav | `9876543210` | `demo1234` | Hindi voice, intake camera, offline queue, cash ledger |
+| **Authorized Recycler** | Rajesh Sharma (EcoCycle) | `9123456780` | `demo1234` | Scrap radar, offers, calibrated-scale handover |
+| **CPCB / Admin** | Central Directorate | `9998887770` | `demo1234` | License review, master ledger, EPR passport audit |
+
+> ⚠️ These credentials are for local demonstration only. Remove the seed data and disable the demo router before any real deployment.
 
 ---
 
-## 📂 12. Repository Directory Structure
+## 12. Repository Structure
 
 ```text
 ReVive/
-├── logo.jpeg                           # Official ReVive brand logo
-├── ReVive_Architecture.drawio          # Native Draw.io / diagrams.net architecture file
-├── ReVive_Architecture.svg             # Scalable 1840x1260 vector architecture diagram
-├── ReVive_Architecture.png             # High-resolution raster preview for slides
-├── ReVive_Architecture.html            # Standalone interactive architecture viewer
+├── logo.jpeg                           # Brand logo
+├── ReVive_Architecture.drawio          # Editable Draw.io architecture source
+├── ReVive_Architecture.svg             # Scalable vector diagram
+├── ReVive_Architecture.png             # Raster preview for slides
+├── ReVive_Architecture.html            # Standalone interactive viewer
 │
-├── backend/                            # FastAPI Backend Engine (Python)
+├── backend/                            # FastAPI backend (Python)
 │   ├── app/
-│   │   ├── main.py                     # API entry point & middleware configuration
-│   │   ├── models.py                   # SQLAlchemy 2.0 ORM relational database models
-│   │   ├── database.py                 # PostgreSQL & SQLite session management
-│   │   ├── passport_service.py         # Standardized SHA-256 digital passport engine
-│   │   ├── routers/                    # Segregated API endpoints
-│   │   │   ├── auth.py                 # JWT token issuance, phone OTP, and RBAC
-│   │   │   ├── lots.py                 # Scrap lot lifecycle management
-│   │   │   ├── ai.py                   # PyTorch image classification & pricing router
-│   │   │   ├── handovers.py            # Dual-OTP & calibrated scale verification
-│   │   │   ├── documents.py            # CPCB statutory license upload & audit trail
-│   │   │   └── demo.py                 # 1-Click live SIH judging simulation runner
-│   └── tests/                          # 55 automated pytest test cases (100% passing)
+│   │   ├── main.py                     # Entry point and middleware
+│   │   ├── models.py                   # SQLAlchemy 2.0 ORM models
+│   │   ├── database.py                 # PostgreSQL / SQLite sessions
+│   │   ├── passport_service.py         # SHA-256 digital passport engine
+│   │   └── routers/
+│   │       ├── auth.py                 # JWT issuance, phone OTP, RBAC
+│   │       ├── lots.py                 # Scrap lot lifecycle
+│   │       ├── ai.py                   # Image classification and pricing
+│   │       ├── handovers.py            # OTP and calibrated-scale verification
+│   │       ├── documents.py            # CPCB license upload and audit trail
+│   │       └── demo.py                 # One-click judge simulation
+│   └── tests/                          # 55 pytest cases
 │
-├── web/                                # React 18 + Vite Web Application (TypeScript)
+├── web/                                # React 18 + Vite (TypeScript)
 │   ├── src/
-│   │   ├── pages/                      # Role-segregated views (Collector, Recycler, Admin)
-│   │   ├── components/                 # Modals, Passport Viewer, Radar, Vernacular Audio
-│   │   ├── api/                        # Typed REST API client & error handlers
-│   │   └── types.ts                    # TypeScript interfaces & domain models
-│   └── package.json                    # Dependencies & Vite build configuration
+│   │   ├── pages/                      # Collector, Recycler, Admin views
+│   │   ├── components/                 # Modals, passport viewer, radar, audio
+│   │   ├── api/                        # Typed REST client and error handling
+│   │   └── types.ts                    # Domain models
+│   └── package.json
 │
-├── mobile/                             # Flutter Mobile Application (Dart)
+├── mobile/                             # Flutter app (Dart)
 │   ├── lib/
-│   │   ├── screens/                    # Mobile screens (Home, Scan, Price Board, Ledger)
-│   │   ├── services/                   # Offline sync queue, API client, Vernacular TTS
-│   │   └── theme/                      # Responsive design & accessibility tokens
-│   └── test/                           # 13 automated Flutter unit & widget tests
+│   │   ├── screens/                    # Home, Scan, Price Board, Ledger
+│   │   ├── services/                   # Offline sync queue, API client, TTS
+│   │   └── theme/                      # Accessibility and responsive tokens
+│   └── test/                           # 13 unit and widget tests
 │
-├── Ai/                                 # PyTorch Deep Learning Computer Vision Pipeline
-│   └── SIH_2026-main/
-│       ├── model/
-│       │   └── ewaste_classifier.pt    # PyTorch MobileNetV3 / SmallCNN trained weights
-│       ├── test_model.py               # Local standalone inference verification script
-│       └── pcb_test.jpg                # Benchmark circuit board sample image
+├── Ai/SIH_2026-main/                   # PyTorch computer-vision pipeline
+│   ├── model/ewaste_classifier.pt      # Trained weights
+│   ├── test_model.py                   # Standalone inference check
+│   └── pcb_test.jpg                    # Benchmark PCB image
 │
-├── dataset/                            # Empirical Indian Scrap Datasets
-│   ├── price_dataset_india_locations.csv  # 7,652 regional pricing benchmarks across India
-│   └── recycler_dataset_large.csv         # Verified CPCB-authorized recycler database
+├── dataset/
+│   ├── price_dataset_india_locations.csv   # 7,652 regional price points
+│   └── recycler_dataset_large.csv          # CPCB-authorized recycler database
 │
-└── docs/                               # Comprehensive Project Documentation
-    ├── SIH_DEMO.md                     # Step-by-Step Jury Demonstration Script
-    ├── SIH26229_COMPLIANCE.md          # Exhaustive SIH26229 Problem Statement Matrix
-    ├── Architecture.md                 # Complete Engineering System Design
-    ├── SECURITY.md                     # Security Architecture & RBAC Hardening
-    ├── PERFORMANCE.md                  # Sub-500ms Latency Benchmarks & SLAs
-    ├── UNIT_ECONOMICS.md               # P&L Model & Collector Income Lift (+38%)
-    └── FINAL_AUDIT.md                  # Final Compliance Sign-Off Across All Mandates
+└── docs/
+    ├── SIH_DEMO.md                     # Jury demo script
+    ├── SIH26229_COMPLIANCE.md          # Problem-statement compliance matrix
+    ├── Architecture.md                 # Engineering system design
+    ├── SECURITY.md                     # Security architecture and threat model
+    ├── PERFORMANCE.md                  # Latency benchmarks and SLAs
+    ├── UNIT_ECONOMICS.md               # P&L model and collector income lift
+    ├── DATA_PROVENANCE.md              # Origin of the 7,652 pricing points
+    └── FINAL_AUDIT.md                  # Final compliance sign-off
 ```
 
 ---
 
-## 📚 13. Complete Documentation Hub
+## 13. Documentation Hub
 
-For detailed deep dives into specific engineering aspects of ReVive, explore our dedicated guides:
-
-- 🎬 [**SIH_DEMO.md**](file:///d:/ReVive/docs/SIH_DEMO.md) — Step-by-step jury demonstration script & 3-minute presentation playbook.
-- 📋 [**SIH26229_COMPLIANCE.md**](file:///d:/ReVive/docs/SIH26229_COMPLIANCE.md) — Direct compliance mapping against every statutory requirement of Problem Statement SIH26229.
-- 🏛️ [**Architecture.md**](file:///d:/ReVive/docs/Architecture.md) — Comprehensive engineering specification of all subsystems.
-- 🔒 [**SECURITY.md**](file:///d:/ReVive/docs/SECURITY.md) — Cryptographic architecture, magic-byte inspection, RBAC, and threat model.
-- ⚡ [**PERFORMANCE.md**](file:///d:/ReVive/docs/PERFORMANCE.md) — Empirical response-time benchmarks and sub-500ms optimizations.
-- 💰 [**UNIT_ECONOMICS.md**](file:///d:/ReVive/docs/UNIT_ECONOMICS.md) — Financial viability, collector income increase (+38%), and recycler ROI.
-- 🗃️ [**DATA_PROVENANCE.md**](file:///d:/ReVive/docs/DATA_PROVENANCE.md) — Origin and validation methodology for the 7,652 pricing points.
-- 📜 [**FINAL_AUDIT.md**](file:///d:/ReVive/docs/FINAL_AUDIT.md) — End-to-end sign-off report confirming 100% green status.
+| Document | What's inside |
+|:---|:---|
+| 🎬 [SIH_DEMO.md](docs/SIH_DEMO.md) | Step-by-step jury script and 3-minute presentation playbook |
+| 📋 [SIH26229_COMPLIANCE.md](docs/SIH26229_COMPLIANCE.md) | Requirement-by-requirement mapping to the problem statement |
+| 🏛️ [Architecture.md](docs/Architecture.md) | Engineering specification of every subsystem |
+| 🔒 [SECURITY.md](docs/SECURITY.md) | Cryptography, magic-byte inspection, RBAC, threat model |
+| ⚡ [PERFORMANCE.md](docs/PERFORMANCE.md) | Response-time benchmarks and optimizations |
+| 💰 [UNIT_ECONOMICS.md](docs/UNIT_ECONOMICS.md) | Financial viability, collector income lift (+38%), recycler ROI |
+| 🗃️ [DATA_PROVENANCE.md](docs/DATA_PROVENANCE.md) | Origin and validation of the pricing dataset |
+| 📜 [FINAL_AUDIT.md](docs/FINAL_AUDIT.md) | End-to-end sign-off report |
 
 ---
 
-## 🏆 Smart India Hackathon 2026
+## 14. Roadmap
 
-**Project**: ReVive — *"Giving E-Waste a Second Life"*  
-**Problem Statement**: SIH26229 — **KABADIWALA CONNECT**: Bringing the Informal Collector into the Formal Recycling Chain  
-**Category**: Software Edition • Clean & Green Technology / Circular Economy  
-**Target Beneficiaries**: Informal Waste Pickers (*Kabadiwalas*), Authorized Recyclers, Urban Local Bodies (ULBs), Central Pollution Control Board (CPCB), and Extended Producer Responsibility (EPR) Brands.
+- [ ] More regional languages and IVR / WhatsApp intake for feature-phone users
+- [ ] Live UPI payment-gateway integration (UTR is currently recorded manually)
+- [ ] Retrain the classifier on field-captured images to improve low-light and cluttered-scene accuracy
+- [ ] Hosted pilot with ULBs and a small set of authorized recyclers
+- [ ] Brand-facing EPR dashboard with scheduled compliance exports
+- [ ] Collector credit-scoring integration with micro-finance partners
+
+<!-- Edit this list to match your real plans. -->
+
+---
+
+## 15. Team, License and Acknowledgements
+
+**Team:** [Team name] — [Member 1], [Member 2], [Member 3], [Member 4], [Member 5], [Member 6]
+**Mentor:** [Mentor name]
+
+**Project:** ReVive — *"Giving E-Waste a Second Life"*
+**Problem Statement:** SIH26229 — **Kabadiwala Connect**: Bringing the Informal Collector into the Formal Recycling Chain
+**Category:** Software Edition · Clean & Green Technology / Circular Economy
+**Target beneficiaries:** Informal waste pickers, authorized recyclers, Urban Local Bodies (ULBs), the Central Pollution Control Board (CPCB), and EPR-obligated brands
+
+Released under the [MIT License](LICENSE).
 
 <div align="center">
-  <sub>Built with ❤️ for India's unsung recycling champions. Licensed under the <a href="LICENSE">MIT License</a>.</sub>
+  <sub>Built with ❤️ for India's unsung recycling champions.</sub>
 </div>
