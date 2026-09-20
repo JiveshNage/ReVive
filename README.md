@@ -166,9 +166,7 @@ ReVive is organized into four operational tiers:
 
 <div align="center">
 
-![ReVive System Architecture] <img src="System architecture.png" alt="ReVive System Architecture" width="140" />
-
-*Complete system architecture. Editable vector source: [`ReVive_Architecture.drawio`](ReVive_Architecture.drawio) · Interactive viewer: [`ReVive_Architecture.html`](ReVive_Architecture.html)*
+<img src="System architecture.png" alt="ReVive System Architecture" width="700" />
 
 </div>
 
@@ -324,7 +322,6 @@ curl -X POST http://127.0.0.1:8001/api/demo/run-workflow
 }
 ```
 
-For the full presentation script, see [`docs/SIH_DEMO.md`](docs/SIH_DEMO.md).
 
 ---
 
@@ -483,22 +480,7 @@ ReVive/
 
 ---
 
-## 13. Documentation Hub
-
-| Document | What's inside |
-|:---|:---|
-| 🎬 [SIH_DEMO.md](docs/SIH_DEMO.md) | Step-by-step jury script and 3-minute presentation playbook |
-| 📋 [SIH26229_COMPLIANCE.md](docs/SIH26229_COMPLIANCE.md) | Requirement-by-requirement mapping to the problem statement |
-| 🏛️ [Architecture.md](docs/Architecture.md) | Engineering specification of every subsystem |
-| 🔒 [SECURITY.md](docs/SECURITY.md) | Cryptography, magic-byte inspection, RBAC, threat model |
-| ⚡ [PERFORMANCE.md](docs/PERFORMANCE.md) | Response-time benchmarks and optimizations |
-| 💰 [UNIT_ECONOMICS.md](docs/UNIT_ECONOMICS.md) | Financial viability, collector income lift (+38%), recycler ROI |
-| 🗃️ [DATA_PROVENANCE.md](docs/DATA_PROVENANCE.md) | Origin and validation of the pricing dataset |
-| 📜 [FINAL_AUDIT.md](docs/FINAL_AUDIT.md) | End-to-end sign-off report |
-
----
-
-## 14. Roadmap
+## 13. Roadmap
 
 - [ ] More regional languages and IVR / WhatsApp intake for feature-phone users
 - [ ] Live UPI payment-gateway integration (UTR is currently recorded manually)
@@ -511,10 +493,8 @@ ReVive/
 
 ---
 
-## 15. Team, License and Acknowledgements
+## 15.  License and Acknowledgements
 
-**Team:** [Team name] — [Member 1], [Member 2], [Member 3], [Member 4], [Member 5], [Member 6]
-**Mentor:** [Mentor name]
 
 **Project:** ReVive — *"Giving E-Waste a Second Life"*
 **Problem Statement:** SIH26229 — **Kabadiwala Connect**: Bringing the Informal Collector into the Formal Recycling Chain
