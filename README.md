@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="logo.jpeg" alt="ReVive logo" width="140" />
+<img src="backend\Logo english.jpeg" alt="ReVive logo" width="140" />
 
 # ReVive — Giving E-Waste a Second Life
 
@@ -166,7 +166,7 @@ ReVive is organized into four operational tiers:
 
 <div align="center">
 
-![ReVive System Architecture](ReVive_Architecture.png)
+![ReVive System Architecture](System architecture.png)
 
 *Complete system architecture. Editable vector source: [`ReVive_Architecture.drawio`](ReVive_Architecture.drawio) · Interactive viewer: [`ReVive_Architecture.html`](ReVive_Architecture.html)*
 
